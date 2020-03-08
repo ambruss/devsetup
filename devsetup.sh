@@ -150,6 +150,11 @@ curl -LSsO https://downloads.slack-edge.com/linux_releases/slack-desktop-4.3.2-a
 sudo dpkg --install slack-desktop-*.deb || sudo apt-get install -yf
 )
 
+should_install gitkraken && (
+curl -LSsO https://release.gitkraken.com/linux/gitkraken-amd64.deb
+sudo dpkg --install gitkraken-amd64.deb
+)
+
 should_install sublime "which subl" && (
 curl -LSs https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
 echo "deb https://download.sublimetext.com/ apt/dev/" | sudo tee /etc/apt/sources.list.d/sublime-text.list
