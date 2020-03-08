@@ -1,51 +1,40 @@
 #/usr/bin/env sh
-export USAGE="
+export APPS="$(cat $0 2>/dev/null | grep -Eo '^should_install ([^ ]+)' | sed -E 's|.* (.*)|\1|' | sort)"
+export APPS_VER="$(cat $0 2>/dev/null | grep -Eo 'arg_ver ([^ )]+)' | sed -E 's|.* (.*)|\1|' | sort)"
+export USAGE="Usage: $0 [OPTION...]
+
 Automated development environment and toolset setup on Elementary OS.
 
-Usage:
-  $0 [OPTION...]
+Examples:
+  $0 --exclude sublime
+  $0 --include python --version python=3.8.2 --force
 
 Options:
   -i, --include APP         Only install explicitly whitelisted tools
   -x, --exclude APP         Skip installing explicitly blacklisted tools
   -v, --version APP=VER     Install tool version VER instead of latest
+  -s, --secret KEY          Install licenses and keys using secret.sh
   -f, --force               Force tool re-installs even if already present
+  -t, --dry-run             Only print what would be installed
 
-Tools supported via --include/--exclude:
-  - apt-packages (dstat git htop jq nano ncdu tmux tree zsh [+libs])
-  - oh-my-zsh (zsh++)
-  - nanorc (nano++)
-  - elementary-tweaks (win-style)
-  - google-chrome
-  - subl (sublime editor)
-  - nvim (neovim - vim++)
-  - bat (cat++)
-  - exa (ls++)
-  - rg (ripgrep - grep++)
-  - fd (find++)
-  - fzf (fuzzy find - complements [oh-my-]zsh)
-  - diff-so-fancy (git diff++)
-  - python (supports version override N.N.N)
-  - venv (compose httpie ipython)
-  - node
-  - docker
-  - kubectl (supports version override vN.N.N)
-  - helm (supports version override vN.N.N)
-  - skaffold
-  - minikube
+$(if [ -n "$APPS" ]; then
+echo "Tools supported via --include/--exclude:"
+for APP in $APPS; do
+    local ENTRY="  - $APP"
+    echo $APPS_VER | grep -q $APP && ENTRY="$ENTRY (supports -v)"
+    echo "$ENTRY"
+done
+fi)
 "
 
-# common version regex
-export VERSION_RE="v?[0-9]+(\.[0-9]+)+"
+export VERSION_RE="v?[0-9]+(\.[0-9]+)+"  # common version regex
 
-# tools marked as included
-export INCLUDE=
-# tools marked as excluded
-export EXCLUDE=
-# version overrides
-export VERSION=
-# toggle forcing reinstalls
-export FORCE=false
+export INCLUDE=  # tools marked as included
+export EXCLUDE=  # tools marked as excluded
+export VERSION=  # version overrides
+export SECRET=   # secret key file
+export FORCE=false    # toggle forcing reinstalls
+export DRY_RUN=false  # toggle dry-run
 
 
 # MAIN BEGIN
@@ -54,38 +43,65 @@ main() {
 test "$DEBUG" && set -o xtrace
 set -o errexit
 set -o nounset
+test $(id -un) = root && log "Cannot run as root" && exit 1
 
-local BIN=/usr/local/bin
-local SHARE=/usr/share
-local VENV=$HOME/.venv
-local NODE=$HOME/.node
+local CONFIG=$HOME/.config
+local LOCAL=$HOME/.local
+local BIN=$LOCAL/bin
+local SHARE=$LOCAL/share
+local NODE=$LOCAL/node
+local VENV=$LOCAL/venv
+
 while [ $# -gt 0 ]; do
     case $1 in
         -i|--include) INCLUDE="$INCLUDE $2"; shift;;
         -x|--exclude) EXCLUDE="$EXCLUDE $2"; shift;;
         -v|--version) VERSION="$VERSION $2"; shift;;
+        -s|--secret) SECRET="$2"; shift;;
         -f|--force) FORCE=true;;
-        -h|--help) echo "$USAGE"; exit 0;;
-        *) echo -e "Unkown arg $1\n$USAGE" >&2; exit 1;;
+        -t|--dry-run) DRY_RUN=true;;
+        -h|--help) printf "$USAGE"; exit 0;;
+        *) printf "Unkown arg: $1\n\n$USAGE" >&2; exit 1;;
     esac
     shift
 done
 
 cd /tmp
+mkdir -p $CONFIG $BIN $SHARE
 
 should_install apt-packages is_installed_apt && (
-log "Installing apt-packages"
 sudo apt-get -qq update
 sudo apt-get -qq install -y $APT_PACKAGES
+printf "[User]\nSystemAccount=true\n" | sudo tee /var/lib/AccountsService/users/libvirt-qemu
+sudo systemctl restart accounts-daemon.service
 )
 
-which zsh >/dev/null && getent passwd $(id -u) | grep -vq zsh && (
+lsmod | grep -q vhost || (
+log "Enabling vhost_net module"
+sudo modprobe vhost_net
+echo vhost_net | sudo tee -a /etc/modules
+)
+
+should_install git-crypt && (
+git clone https://github.com/AGWA/git-crypt.git $SHARE/git-crypt
+cd $SHARE/git-crypt
+make
+make install PREFIX=$LOCAL
+)
+
+test -n "$SECRET" && (
+git clone https://github.com/ambruss/devsetup.git $SHARE/devsetup
+cd $SHARE/devsetup
+$BIN/git-crypt unlock $SECRET
+. secret.sh
+)
+
+which zsh >/dev/null && getent passwd $(id -u) | grep -q zsh || (
 log "Setting user shell to zsh"
 chsh -s $(which zsh)
 )
 
 should_install oh-my-zsh "test -d ~/.oh-my-zsh" && (
-log "Installing oh-my-zsh"
 rm -rf ~/.oh-my-zsh
 OHMYZSH_DIR=~/.oh-my-zsh/custom
 OHMYZSH_URL=https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh
@@ -100,7 +116,7 @@ sed_zshrc 'ZSH_THEME="robbyrussell"'       'ZSH_THEME="devsetup"'
 sed_zshrc '# DISABLE_UPDATE_PROMPT="true"' 'DISABLE_UPDATE_PROMPT="true"'
 sed_zshrc '# HIST_STAMPS="mm/dd/yyyy"'     'HIST_STAMPS="yyyy-mm-dd"'
 sed_zshrc '^plugins=.*' 'plugins=(extract git httpie z zsh-autosuggestions zsh-syntax-highlighting)'
-echo "$ZSH_PROFILE" | sed "s|\$VENV|$VENV|;s|\$NODE|$NODE|" >$OHMYZSH_DIR/devsetup.zsh
+echo "$ZSH_PROFILE" | sed "s|{{PATH}}|$VENV:$NODE:$BIN|" >$OHMYZSH_DIR/devsetup.zsh
 echo "$ZSH_THEME" >$OHMYZSH_DIR/themes/devsetup.zsh-theme
 )
 
@@ -113,7 +129,6 @@ git config --global alias.lg "log --abbrev-commit --color --graph --pretty=forma
 )
 
 should_install nanorc "test -f ~/.nanorc" && (
-log "Installing nanorc"
 NANORC_URL=https://raw.githubusercontent.com/scopatz/nanorc/master/install.sh
 curl -LSs $NANORC_URL | sh
 find ~/.nano -type f | xargs sed -i "s/normal/white/g"
@@ -121,85 +136,87 @@ echo "$NANORC" >>~/.nanorc
 )
 
 should_install elementary-tweaks "apt show elementary-tweaks" && (
-log "Installing elementary-tweaks"
 sudo add-apt-repository -y ppa:philip.scott/elementary-tweaks
 sudo apt-get -qq install -y elementary-tweaks
 )
 
 should_install google-chrome && (
-log "Installing chrome (google-chrome)"
 curl -LSsO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 sudo dpkg --install google-chrome-stable_current_amd64.deb || sudo apt-get install -yf
 )
 
-should_install subl && (
-log "Installing sublime (subl)"
+should_install sublime "which subl" && (
 curl -LSs https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
 echo "deb https://download.sublimetext.com/ apt/dev/" | sudo tee /etc/apt/sources.list.d/sublime-text.list
 sudo apt-get -qq update
 sudo apt-get -qq install -y sublime-text
+SUBL_INSTALLS="$CONFIG/sublime-text-3/Installed Packages"
+SUBL_SETTINGS="$CONFIG/sublime-text-3/Packages/User"
+mkdir -p "$SUBL_INSTALLS" "$SUBL_SETTINGS"
+curl -LSsO "https://packagecontrol.io/Package Control.sublime-package"
+mv "Package Control.sublime-package" "$SUBL_INSTALLS"
+echo "$SUBL_PACKAGES" >"$SUBL_SETTINGS/Package Control.sublime-settings"
+echo "$SUBL_PREFERENCES" >>"$SUBL_SETTINGS/Preferences.sublime-settings"
 )
 
 should_install nvim && (
-log "Installing neovim (nvim)"
 NVIM_VER=$(latest neovim/neovim)
 NVIM_URL=https://github.com/neovim/neovim/releases/download/$NVIM_VER/nvim.appimage
 curl -LSso nvim $NVIM_URL
 chmod +x nvim
-sudo mv -f nvim $BIN
+mv -f nvim $BIN
+rm -rf $CONFIG/nvim $SHARE/nvim
+curl -LSsO https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+mkdir -p $CONFIG/nvim $SHARE/nvim/site/autoload
+mv -f plug.vim $SHARE/nvim/site/autoload
+echo "$INIT_VIM" >$CONFIG/nvim/init.vim
 )
 
 should_install bat && (
-log "Installing bat (cat)"
 BAT_VER=$(latest sharkdp/bat)
 BAT_DIR=bat-$BAT_VER-x86_64-unknown-linux-gnu
 BAT_URL=https://github.com/sharkdp/bat/releases/download/$BAT_VER/$BAT_DIR.tar.gz
 curl -LSs $BAT_URL | tar xz
-sudo mv -f $BAT_DIR/bat $BIN
+mv -f $BAT_DIR/bat $BIN
 )
 
 should_install exa && (
-log "Installing exa (ls)"
 EXA_VER=$(latest ogham/exa)
 EXA_BIN=exa-linux-x86_64
 EXA_ZIP=$EXA_BIN-$(echo $EXA_VER | sed 's|v||').zip
 EXA_URL=https://github.com/ogham/exa/releases/download/$EXA_VER/$EXA_ZIP
 curl -LSsO $EXA_URL
 unzip $EXA_ZIP
-sudo mv -f $EXA_BIN $BIN/exa
+mv -f $EXA_BIN $BIN/exa
 )
 
 should_install rg && (
-log "Installing ripgrep (rg)"
 RG_VER=$(latest BurntSushi/ripgrep)
 RG_DIR=ripgrep-$RG_VER-x86_64-unknown-linux-musl
 RG_URL=https://github.com/BurntSushi/ripgrep/releases/download/$RG_VER/$RG_DIR.tar.gz
 curl -LSs $RG_URL | tar xz
-sudo mv -f $RG_DIR/rg $BIN
+mv -f $RG_DIR/rg $BIN
 )
 
 should_install fd && (
-log "Installing advanced find (fd)"
 FD_VER=$(latest sharkdp/fd)
 FD_DIR=fd-$FD_VER-x86_64-unknown-linux-gnu
 FD_URL=https://github.com/sharkdp/fd/releases/download/$FD_VER/$FD_DIR.tar.gz
 curl -LSs $FD_URL | tar xz
-sudo mv -f $FD_DIR/fd $BIN
+mv -f $FD_DIR/fd $BIN
 )
 
 should_install fzf && (
-log "Installing fuzzy find (fzf)"
-sudo rm -rf $SHARE/fzf
-sudo git clone --depth 1 https://github.com/junegunn/fzf.git $SHARE/fzf
+rm -rf $SHARE/fzf
+git clone --depth 1 https://github.com/junegunn/fzf.git $SHARE/fzf
 sudo $SHARE/fzf/install --all --no-bash
 )
 
 should_install diff-so-fancy && (
-log "Installing diff-so-fancy (git diff)"
 DIFF_URL=https://raw.githubusercontent.com/so-fancy/diff-so-fancy/master/third_party/build_fatpack/diff-so-fancy
 curl -LSso diff-so-fancy $DIFF_URL
 chmod +x diff-so-fancy
-sudo mv -f diff-so-fancy $BIN
+mv -f diff-so-fancy $BIN
 eval $(diff-so-fancy --colors)
 git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
 git config --global --bool diff-so-fancy.markEmptyLines false
@@ -208,12 +225,10 @@ git config --global --bool diff-so-fancy.stripLeadingSymbols false
 git config --global diff-so-fancy.rulerWidth 47
 )
 
-PY_VER_ARG=$(echo $VERSION | grep python= | sed -E "s|.*python=($VERSION_RE).*|\1|")
-PY_VER=${PY_VER_ARG:-$(latest https://www.python.org/downloads/ "Python ($VERSION_RE)")}
+PY_VER=$(arg_ver python || latest https://www.python.org/downloads/ "Python ($VERSION_RE)")
 PY_URL=https://www.python.org/ftp/python/$PY_VER/Python-$PY_VER.tar.xz
 PY_BIN=$(echo python$PY_VER | sed 's/\.[0-9]$//')
 should_install python "which $PY_BIN" && (
-log "Installing python"
 curl -LSs $PY_URL | tar xJ
 (
     cd Python-$PY_VER
@@ -230,11 +245,14 @@ curl -LSs $PY_URL | tar xJ
 )
 
 should_install venv "test -d $VENV" && (
-log "Installing python venv"
 rm -rf $VENV
 virtualenv -p $PY_BIN $VENV
+)
+
+should_install pip-packages is_installed_pip && (
 $VENV/bin/pip install $PIP_PACKAGES
-PYPPETEER_CHROMIUM_REVISION=$(curl -LSs https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/LAST_CHANGE) \
+PYPPETEER_URL=https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/LAST_CHANGE
+PYPPETEER_CHROMIUM_REVISION=$(curl -LSs $PYPPETEER_URL) \
 $VENV/bin/pyppeteer-install
 $VENV/bin/ipython profile create
 sed_ipy() { sed -i "s|^#$1.*|$1 = $2|" ~/.ipython/profile_default/ipython_config.py; }
@@ -247,62 +265,63 @@ sed_ipy c.TerminalInteractiveShell.term_title_format "'ipy {cwd}'"
 sed_ipy c.Completer.greedy True
 )
 
-should_install node && (
-log "Installing nodejs"
+should_install node "test -d $NODE" && (
 NODE_VER=$(latest https://nodejs.org/dist/latest/ "-($VERSION_RE)-")
 NODE_DIR=node-$NODE_VER-linux-x64
 NODE_URL=https://nodejs.org/dist/latest/$NODE_DIR.tar.xz
 curl -LSs $NODE_URL | tar xJ
 rm -rf $NODE
-sudo mv -f $NODE_DIR $NODE
+mv -f $NODE_DIR $NODE
 PATH="$NODE/bin:$PATH" NPM_CONFIG_PREFIX=$NODE npm install --global tldr
 )
 
 should_install docker && (
-log "Installing docker"
 curl -LSs https://get.docker.com | sh
 sudo usermod -aG docker $(id -un)
 )
 
+should_install docker-machine && (
+DMACHINE_VER=$(latest docker/machine)
+DMACHINE_URL=https://github.com/docker/machine/releases/download/$DMACHINE_VER/docker-machine-Linux-x86_64
+curl -LSso docker-machine $DMACHINE_URL
+chmod +x docker-machine
+mv -f docker-machine $BIN
+)
+
 should_install kubectl && (
-log "Installing kubectl"
-KUBE_VER_ARG=$(echo $VERSION | grep kubectl= | sed -E "s|.*kubectl=($VERSION_RE).*|\1|")
-KUBE_VER=${KUBE_VER_ARG:-$(curl -LSs https://storage.googleapis.com/kubernetes-release/release/stable.txt)}
+KUBE_VER=$(arg_ver kubectl || curl -LSs https://storage.googleapis.com/kubernetes-release/release/stable.txt)
 KUBE_URL=https://storage.googleapis.com/kubernetes-release/release/$KUBE_VER/bin/linux/amd64/kubectl
 curl -LSso kubectl $KUBE_URL
 chmod +x kubectl
-sudo mv -f kubectl $BIN
+mv -f kubectl $BIN
 )
 
 should_install helm && (
-log "Installing helm"
-HELM_VER_ARG=$(echo $VERSION | grep helm= | sed -E "s|.*helm=($VERSION_RE).*|\1|")
-HELM_VER=${HELM_VER_ARG:-$(latest helm/helm "-($VERSION_RE)-")}
+HELM_VER=$(arg_ver helm || latest helm/helm "-($VERSION_RE)-")
 HELM_URL=https://get.helm.sh/helm-$HELM_VER-linux-amd64.tar.gz
 curl -LSs $HELM_URL | tar xz
-sudo mv -f linux-amd64/helm $BIN
+mv -f linux-amd64/helm $BIN
 )
 
 should_install skaffold && (
-log "Installing skaffold"
-SKAFFOLD_VER=latest
-SKAFFOLD_URL=https://storage.googleapis.com/skaffold/releases/$SKAFFOLD_VER/skaffold-linux-amd64
+SKAFFOLD_VER=$(latest GoogleContainerTools/skaffold)
+SKAFFOLD_URL=https://github.com/GoogleContainerTools/skaffold/releases/download/$SKAFFOLD_VER/skaffold-linux-amd64
 curl -LSso skaffold $SKAFFOLD_URL
 chmod +x skaffold
-sudo mv -f skaffold $BIN
+mv -f skaffold $BIN
 )
 
 should_install minikube && (
-log "Installing minikube"
-MINIKUBE_VER=latest
-MINIKUBE_URL=https://storage.googleapis.com/minikube/releases/$MINIKUBE_VER/minikube-linux-amd64
-curl -LSso minikube $MINIKUBE_URL
-chmod +x minikube
-sudo mv -f minikube $BIN
-minikube config set cpus 1
-minikube config set disk-size 8192
-minikube config set memory 4096
-minikube config set vm-driver none
+MINIKUBE_VER=$(latest kubernetes/minikube)
+MINIKUBE_BASEURL=https://github.com/kubernetes/minikube/releases/download/$MINIKUBE_VER
+curl -LSso minikube $MINIKUBE_BASEURL/minikube-linux-amd64
+curl -LSsO $MINIKUBE_BASEURL/docker-machine-driver-kvm2
+chmod +x minikube docker-machine-driver-kvm2
+mv -f minikube docker-machine-driver-kvm2 $BIN
+minikube config set cpus 4
+minikube config set disk-size 32768
+minikube config set memory 8192
+minikube config set vm-driver kvm2
 minikube config set WantNoneDriverWarning false
 minikube config set WantUpdateNotification false
 KUBE_VER=$(kubectl version 2>/dev/null | grep -Eo $VERSION_RE | head -1)
@@ -316,9 +335,8 @@ return 0
 }
 
 
-log() {
-    printf "\033[1;32m[INFO]\033[0m %s\n" "$*"
-}
+# log message line with colored info prefix
+log() { printf "\033[1;32m[INFO]\033[0m %s\n" "$*"; }
 
 
 # get and maintain sudo
@@ -359,9 +377,11 @@ should_install() {
     elif [ "$EXCLUDE" ]; then
         echo $EXCLUDE | grep -q $TOOL && return 1
     fi
-    $FORCE && return 0
-    eval "$IS_INSTALLED" >/dev/null 2>&1 && return 1
-    return 0
+    if $FORCE || ! eval "$IS_INSTALLED" >/dev/null 2>&1; then
+        log "Installing $TOOL"
+        $DRY_RUN && return 1 || return 0
+    fi
+    return 1
 }
 
 
@@ -375,8 +395,28 @@ is_installed_apt() {
 }
 
 
+# return 0 if all packages in PIP_PACKAGES are installed
+is_installed_pip() {
+    pip freeze | sed -E 's|([^=]+)=.*|\1|' >pip.list || return 1
+    for PACKAGE in $PIP_PACKAGES; do
+        grep -Eq "^$PACKAGE\$" pip.list || return 1
+    done
+    return 0
+}
+
+
+# echo tool version specified by the user, if any
+arg_ver() {
+    local TOOL="$1"
+    local TOOL_VER=$(echo $VERSION | grep $TOOL= | sed -E "s|.*$TOOL=($VERSION_RE).*|\1|")
+    test $TOOL_VER || return 1
+    echo $TOOL_VER
+}
+
+
 APT_PACKAGES=$(cat <<EOF
 apt-transport-https
+bridge-utils
 build-essential
 curl
 dstat
@@ -384,18 +424,25 @@ git
 htop
 jq
 libbz2-dev
+libguestfs-tools
 libncurses5-dev
 libncursesw5-dev
 libreadline-dev
 libsqlite3-dev
 libssl-dev
+libvirt-bin
 llvm
 nano
 ncdu
+qemu-kvm
 software-properties-common
 tmux
 tree
-tk-dev
+virt-manager
+virt-top
+virtinst
+xclip
+xsltproc
 xz-utils
 zlib1g-dev
 zsh
@@ -415,6 +462,7 @@ fastapi
 httpie
 invoke
 ipython
+jedi
 keras
 matplotlib
 numpy
@@ -425,6 +473,7 @@ pip-compile-multi
 pipenv
 poetry
 psutil
+pynvim
 pyqt5
 pytest
 pytest-bandit
@@ -445,6 +494,74 @@ sqlalchemy
 typer[all]
 yapf
 yappi
+EOF
+)
+
+
+SUBL_PACKAGES=$(cat <<EOF
+{
+    "installed_packages":
+    [
+        "A File Icon",
+        "All Autocomplete",
+        "Anaconda",
+        "AutoFileName",
+        "BracketHighlighter",
+        "Dockerfile Syntax Highlighting",
+        "GitGutter",
+        "HTML-CSS-JS Prettify",
+        "Markdown Extended",
+        "nginx",
+        "SideBarEnhancements",
+        "Sublime Tutor",
+        "SublimeLinter",
+        "TrailingSpaces"
+    ]
+}
+EOF
+)
+
+
+SUBL_PREFERENCES=$(cat <<EOF
+{
+    "auto_complete_commit_on_tab": true,
+    "color_scheme": "Packages/Color Scheme - Default/Monokai.sublime-color-scheme",
+    "draw_white_space": "all",
+    "ensure_newline_at_eof_on_save": true,
+    "highlight_line": true,
+    "remember_full_screen": true,
+    "rulers": [80, 100],
+    "show_line_endings": true,
+    "theme": "Adaptive.sublime-theme",
+    "translate_tabs_to_spaces": true,
+    "trim_trailing_white_space_on_save": true
+}
+EOF
+)
+
+INIT_VIM=$(cat <<EOF
+call plug#begin('$SHARE/nvim/plugged')
+Plug 'davidhalter/jedi-vim', {'do': ':UpdateRemotePlugins'}
+Plug 'jiangmiao/auto-pairs', {'do': ':UpdateRemotePlugins'}
+Plug 'machakann/vim-highlightedyank', {'do': ':UpdateRemotePlugins'}
+Plug 'neomake/neomake', {'do': ':UpdateRemotePlugins'}
+Plug 'numirias/semshi', {'do': ':UpdateRemotePlugins'}
+Plug 'sbdchd/neoformat', {'do': ':UpdateRemotePlugins'}
+Plug 'scrooloose/nerdcommenter', {'do': ':UpdateRemotePlugins'}
+Plug 'scrooloose/nerdtree', {'do': ':UpdateRemotePlugins'}
+Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+Plug 'terryma/vim-multiple-cursors', {'do': ':UpdateRemotePlugins'}
+Plug 'tmhedberg/SimpylFold', {'do': ':UpdateRemotePlugins'}
+Plug 'vim-airline/vim-airline', {'do': ':UpdateRemotePlugins'}
+Plug 'vim-airline/vim-airline-themes', {'do': ':UpdateRemotePlugins'}
+Plug 'zchee/deoplete-jedi', {'do': ':UpdateRemotePlugins'}
+call plug#end()
+autocmd InsertLeave,CompleteDone * if pumvisible() == 0 | pclose | endif
+inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
+let g:airline_theme='minimalist'
+let g:deoplete#auto_complete_delay = 100
+let g:deoplete#enable_at_startup = 1
+set splitbelow
 EOF
 )
 
@@ -497,14 +614,13 @@ EOF
 ZSH_PROFILE=$(cat <<'EOF'
 setopt autocd autopushd pushdignoredups
 
-export _Z_CMD=j
-export CHANGE_MINIKUBE_NONE_USER=true
 export DOCKER_BUILDKIT=1
 export EDITOR=nano
 export MINIKUBE_IN_STYLE=false
 export NPM_CONFIG_PREFIX=$NODE
 export PAGER="less -RF"
-export PATH=$VENV/bin:$NODE/bin:$PATH
+export PATH={{PATH}}:$PATH
+export PIPENV_HIDE_EMOJIS=1
 export REPORTMEMORY=10240
 export REPORTTIME=5
 export TIMEFMT="$TIMEFMT mem %M"
@@ -516,6 +632,12 @@ alias ls="exa -ahl --git --group-directories-first --time-style=long-iso"
 alias top="htop"
 alias tree="tree --dirsfirst --sort=version"
 alias zshrc="$EDITOR ~/.zshrc && source ~/.zshrc"
+
+alias c="xclip"
+alias v="xclip -o"
+
+alias encrypt="gpg --armor --symmetric"
+alias decrypt="gpg"
 
 diff() { /usr/bin/diff --color=always "$@" | diff-so-fancy; }
 lanip() { ip -o route get to 8.8.8.8 | sed -E "s/.*src ([0-9.]+).*/\\1/"; }
