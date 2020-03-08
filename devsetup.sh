@@ -145,6 +145,11 @@ curl -LSsO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64
 sudo dpkg --install google-chrome-stable_current_amd64.deb || sudo apt-get install -yf
 )
 
+should_install slack && (
+curl -LSsO https://downloads.slack-edge.com/linux_releases/slack-desktop-4.3.2-amd64.deb
+sudo dpkg --install slack-desktop-*.deb || sudo apt-get install -yf
+)
+
 should_install sublime "which subl" && (
 curl -LSs https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
 echo "deb https://download.sublimetext.com/ apt/dev/" | sudo tee /etc/apt/sources.list.d/sublime-text.list
