@@ -20,7 +20,7 @@ Options:
 $(if [ -n "$APPS" ]; then
 echo "Tools supported via --include/--exclude:"
 for APP in $APPS; do
-    local ENTRY="  - $APP"
+    ENTRY="  - $APP"
     echo $APPS_VER | grep -q $APP && ENTRY="$ENTRY (supports -v)"
     echo "$ENTRY"
 done
@@ -68,6 +68,7 @@ done
 
 cd /tmp
 mkdir -p $CONFIG $BIN $SHARE
+export PATH=$BIN:$PATH
 
 should_install apt-packages is_installed_apt && (
 sudo apt-get -qq update
@@ -83,17 +84,17 @@ echo vhost_net | sudo tee -a /etc/modules
 )
 
 should_install git-crypt && (
-git clone https://github.com/AGWA/git-crypt.git $SHARE/git-crypt
+test -d $SHARE/git-crypt || git clone https://github.com/AGWA/git-crypt.git $SHARE/git-crypt
 cd $SHARE/git-crypt
 make
 make install PREFIX=$LOCAL
 )
 
 test -n "$SECRET" && (
-git clone https://github.com/ambruss/devsetup.git $SHARE/devsetup
+test -d $SHARE/devsetup || git clone https://github.com/ambruss/devsetup.git $SHARE/devsetup
 cd $SHARE/devsetup
-$BIN/git-crypt unlock $SECRET
-. secret.sh
+git-crypt unlock $SECRET
+. ./secret.sh
 )
 
 which zsh >/dev/null && getent passwd $(id -u) | grep -q zsh || (
@@ -118,6 +119,7 @@ sed_zshrc '# HIST_STAMPS="mm/dd/yyyy"'     'HIST_STAMPS="yyyy-mm-dd"'
 sed_zshrc '^plugins=.*' 'plugins=(extract git httpie z zsh-autosuggestions zsh-syntax-highlighting)'
 echo "$ZSH_PROFILE" | sed "s|{{PATH}}|$VENV:$NODE:$BIN|" >$OHMYZSH_DIR/devsetup.zsh
 echo "$ZSH_THEME" >$OHMYZSH_DIR/themes/devsetup.zsh-theme
+touch ~/.z
 )
 
 test -z "$(git config --global --get user.name)" && (
@@ -286,7 +288,7 @@ PATH="$NODE/bin:$PATH" NPM_CONFIG_PREFIX=$NODE npm install --global tldr
 )
 
 should_install docker && (
-curl -LSs https://get.docker.com | sh
+curl -LSs https://get.docker.com | env -i sh
 sudo usermod -aG docker $(id -un)
 )
 
