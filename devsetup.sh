@@ -83,34 +83,34 @@ sudo modprobe vhost_net
 echo vhost_net | sudo tee -a /etc/modules
 )
 
-DISPLAYLINK_CONF=/usr/share/X11/xorg.conf.d/20-displaylink.conf
-should_install displaylink "test -f $DISPLAYLINK_CONF" && (
-DISPLAYLINK_SITE=https://www.displaylink.com
-DISPLAYLINK_FILE=$(latest $DISPLAYLINK_SITE/downloads/ubuntu "/downloads/file\?id=\d+" | grep -o "\d+")
-DISPLAYLINK_URL="$DISPLAYLINK_SITE/downloads/file?id=$DISPLAYLINK_FILE"
-curl -o displaylink.zip -d"fileId=$DISPLAYLINK_FILE&accept_submit=Accept" $DISPLAYLINK_URL
-unzip displaylink.zip
-sudo ./displaylink-driver*.run
-sudo cat <<EOF >$DISPLAYLINK_CONF
-Section "Device"
-  Identifier "DisplayLink"
-  Driver "modesetting"
-  Option "PageFlip" "false"
-EndSection
-EOF
-)
+# DISPLAYLINK_CONF=/usr/share/X11/xorg.conf.d/20-displaylink.conf
+# should_install displaylink "test -f $DISPLAYLINK_CONF" && (
+# DISPLAYLINK_SITE=https://www.displaylink.com
+# DISPLAYLINK_FILE=$(latest $DISPLAYLINK_SITE/downloads/ubuntu "/downloads/file\?id=\d+" | grep -o "\d+")
+# DISPLAYLINK_URL="$DISPLAYLINK_SITE/downloads/file?id=$DISPLAYLINK_FILE"
+# curl -o displaylink.zip -d"fileId=$DISPLAYLINK_FILE&accept_submit=Accept" $DISPLAYLINK_URL
+# unzip displaylink.zip
+# sudo ./displaylink-driver*.run
+# sudo cat <<EOF >$DISPLAYLINK_CONF
+# Section "Device"
+#   Identifier "DisplayLink"
+#   Driver "modesetting"
+#   Option "PageFlip" "false"
+# EndSection
+# EOF
+# )
 
-should_install virtualbox && (
-VBOX_URL=$(curl https://www.virtualbox.org/wiki/Linux_Downloads \
-    | grep "All distributions" | grep -o "https://.*run")
-VBOX_EXTPACK_URL=$(curl https://www.virtualbox.org/wiki/Downloads \
-    | grep "All supported platforms" | grep -o "https://.*extpack")
-curl -o vbox.run $VBOX_URL
-chmod +x vbox.run
-sudo ./vbox.run
-curl -O $VBOX_EXTPACK_URL
-yes | sudo VBoxManage extpack install --replace Oracle_VM_VirtualBox_Extension_Pack*
-)
+# should_install virtualbox && (
+# VBOX_URL=$(curl https://www.virtualbox.org/wiki/Linux_Downloads \
+#     | grep "All distributions" | grep -o "https://.*run")
+# VBOX_EXTPACK_URL=$(curl https://www.virtualbox.org/wiki/Downloads \
+#     | grep "All supported platforms" | grep -o "https://.*extpack")
+# curl -o vbox.run $VBOX_URL
+# chmod +x vbox.run
+# sudo ./vbox.run
+# curl -O $VBOX_EXTPACK_URL
+# yes | sudo VBoxManage extpack install --replace Oracle_VM_VirtualBox_Extension_Pack*
+# )
 
 log "Configuring git"
 gitconf() { git config --global "$@"; }
@@ -163,20 +163,22 @@ should_install oh-my-zsh "test -d ~/.oh-my-zsh" && (
 rm -rf ~/.oh-my-zsh
 OHMYZSH_DIR=~/.oh-my-zsh/custom
 OHMYZSH_URL=https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh
-OHMYZSH_THEME_URL=https://raw.githubusercontent.com/jackharrisonsherlock/common/master/common.zsh-theme
 curl $OHMYZSH_URL | sh
-curl -o $OHMYZSH_DIR/custom/themes/common.zsh-theme $OHMYZSH_THEME_URL
 (
     cd $OHMYZSH_DIR/plugins
     git clone --depth 1 https://github.com/zsh-users/zsh-autosuggestions.git
     git clone --depth 1 https://github.com/zsh-users/zsh-syntax-highlighting.git
 )
+(
+    cd $OHMYZSH_DIR/themes
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git
+)
 sed_zshrc() { sed -i "s|$1|$2|" ~/.zshrc; }
-sed_zshrc 'ZSH_THEME="robbyrussell"'       'ZSH_THEME="common"'
+sed_zshrc 'ZSH_THEME="robbyrussell"'       'ZSH_THEME="powerlevel10k/powerlevel10k"'
 sed_zshrc '# DISABLE_UPDATE_PROMPT="true"' 'DISABLE_UPDATE_PROMPT="true"'
 sed_zshrc '# HIST_STAMPS="mm/dd/yyyy"'     'HIST_STAMPS="yyyy-mm-dd"'
 sed_zshrc '^plugins=.*' 'plugins=(extract git httpie z zsh-autosuggestions zsh-syntax-highlighting)'
-echo "$ZSH_PROFILE" | sed "s|{{PATH}}|$VENV/bin:$NODE/bin:$BIN|" >$OHMYZSH_DIR/devsetup.zsh
+echo "$ZSH_PROFILE" | sed "s|\{\{PATH\}\}|$VENV/bin:$NODE/bin:$BIN|" >$OHMYZSH_DIR/devsetup.zsh
 touch ~/.z
 )
 
@@ -202,7 +204,7 @@ curl -O https://downloads.slack-edge.com/linux_releases/slack-desktop-4.3.2-amd6
 sudo dpkg --install slack-desktop-*.deb || sudo apt-get install -fy
 )
 
-should_install miktex && (
+should_install miktex "which miktexsetup" && (
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys D6BC243565B2087BC3F897C9277A7293F59E4889
 echo "deb http://miktex.org/download/ubuntu bionic universe" | sudo tee /etc/apt/sources.list.d/miktex.list
 sudo apt-get -qq update
@@ -268,8 +270,8 @@ mv -f $EXA_BIN $BIN/exa
 )
 
 should_install jq && (
-JQ_VER=$(latest stedolan/jq)
-JQ_URL=https://github.com/stedolan/jq/releases/download/$JQ_VER/jq-linux64
+JQ_VER=$(latest stedolan/jq jq-$VERSION_RE)
+JQ_URL=https://github.com/stedolan/jq/releases/download/jq-$JQ_VER/jq-linux64
 curl -o $BIN/jq $JQ_URL
 chmod +x $BIN/jq
 )
@@ -290,7 +292,7 @@ curl $FD_URL | tar xz
 mv -f $FD_DIR/fd $BIN
 )
 
-should_install fzf && (
+should_install fzf "test -d $SHARE/fzf" && (
 rm -rf $SHARE/fzf
 git clone --depth 1 https://github.com/junegunn/fzf.git $SHARE/fzf
 sudo $SHARE/fzf/install --all --no-bash
@@ -315,7 +317,7 @@ git config --global --bool diff-so-fancy.stripLeadingSymbols false
 git config --global diff-so-fancy.rulerWidth 47
 )
 
-PY_VER=$(arg_ver python || latest https://www.python.org/downloads/ "Python ($VERSION_RE)")
+PY_VER=$(arg_ver python || latest https://www.python.org/downloads/ "release.*Python ($VERSION_RE)")
 PY_URL=https://www.python.org/ftp/python/$PY_VER/Python-$PY_VER.tar.xz
 PY_BIN=$(echo python$PY_VER | sed 's/\.[0-9]$//')
 should_install python "which $PY_BIN" && (
@@ -334,7 +336,7 @@ curl $PY_URL | tar xJ
 )
 
 should_install venv "test -d $VENV" && (
-which virtualenv || sudo python -m pip install virtualenv
+which virtualenv || sudo $PY_BIN -m pip install virtualenv
 rm -rf $VENV
 virtualenv -p $PY_BIN $VENV
 )
@@ -457,7 +459,7 @@ latest() {
     local REPO="$1"
     local RE="${2:-/($VERSION_RE)/}"
     echo $REPO | grep -q "^http" || REPO=https://github.com/$REPO/releases
-    curl $REPO | grep -o "href.*$RE" | grep -o -- "$VERSION_RE" | head -n1
+    curl $REPO | grep -o "href.*$RE" | grep -o -- "$VERSION_RE" | sort | uniq | tail -n1
 }
 
 
@@ -746,6 +748,7 @@ EOF
 # TODO help
 ZSH_PROFILE=$(cat <<'EOF'
 setopt autocd autopushd pushdignoredups
+test ! -f ~/.p10k.zsh || source ~/.p10k.zsh
 
 export DOCKER_BUILDKIT=1
 export EDITOR=nano
