@@ -1,6 +1,5 @@
 is_installed() {
     test -d $NODE
-    # TODO check npm packages
 }
 
 install() {
@@ -17,5 +16,8 @@ install() {
 }
 
 NPM_PACKAGES=(
+    fkill
+    speed-test
+    tfa
     tldr
 )

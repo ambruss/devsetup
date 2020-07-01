@@ -14,6 +14,6 @@ install() {
     minikube config set vm-driver kvm2
     minikube config set WantNoneDriverWarning false
     minikube config set WantUpdateNotification false
-    KUBE_VER=$(kubectl version 2>/dev/null | grep -o $VERSION_RE | head -n 1 || true)
+    KUBE_VER=$(kubectl version 2>/dev/null | grep -o $VERSION_RE | head -n1 || true)
     minikube config set kubernetes-version $KUBE_VER
 }

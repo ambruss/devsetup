@@ -3,45 +3,49 @@ is_installed() {
 }
 
 install() {
-    rm -rf ~/.oh-my-zsh
+    rm -rf ~/.zshrc ~/.oh-my-zsh
     OHMYZSH_DIR=~/.oh-my-zsh/custom
     OHMYZSH_URL=https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh
     curl $OHMYZSH_URL | sh
+    clone zsh-users/zsh-autosuggestions $OHMYZSH_DIR/plugins/zsh-autosuggestions
+    clone zsh-users/zsh-syntax-highlighting $OHMYZSH_DIR/plugins/zsh-syntax-highlighting
+    clone romkatv/powerlevel10k $OHMYZSH_DIR/themes/powerlevel10k
     (
-        cd $OHMYZSH_DIR/plugins
-        clone zsh-users/zsh-autosuggestions
-        clone zsh-users/zsh-syntax-highlighting
+        cd $OHMYZSH_DIR
+        GITCOMP_URL=https://raw.githubusercontent.com/git/git/master/contrib/completion
+        curl -o git-completion.bash $GITCOMP_URL/git-completion.bash
+        curl -o _git $GITCOMP_URL/git-completion.zsh
     )
-    (
-        cd $OHMYZSH_DIR/themes
-        clone romkatv/powerlevel10k
-    )
-    sed_zshrc() { sed -i "s|$1|$2|" ~/.zshrc; }
-    sed_zshrc 'ZSH_THEME="robbyrussell"'       'ZSH_THEME="powerlevel10k/powerlevel10k"'
-    sed_zshrc '# DISABLE_UPDATE_PROMPT="true"' 'DISABLE_UPDATE_PROMPT="true"'
-    sed_zshrc '# HIST_STAMPS="mm/dd/yyyy"'     'HIST_STAMPS="yyyy-mm-dd"'
-    sed_zshrc '^plugins=.*' 'plugins=(extract git httpie z zsh-autosuggestions zsh-syntax-highlighting)'
-    echo '# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.' >>~/.zshrc
-    echo 'test ! -f ~/.p10k.zsh || source ~/.p10k.zsh' >>~/.zshrc
+    sed_zshrc() { sed -i "s|^(# )?$1=.*\$|$1=$2|" ~/.zshrc; }
+    sed_zshrc ZSH_THEME powerlevel10k/powerlevel10k
+    sed_zshrc DISABLE_UPDATE_PROMPT true
+    sed_zshrc HIST_STAMPS yyyy-mm-dd
+    sed_zshrc plugins "(extract git httpie z zsh-autosuggestions zsh-syntax-highlighting)"
+    echo '[ -f ~/.p10k.zsh ] && source ~/.p10k.zsh' >>~/.zshrc
     profile | sed "s|_PATH_|$VENV/bin:$NODE/bin:$BIN:\$PATH|" >$OHMYZSH_DIR/profile.zsh
     p10k >~/.p10k.zsh
     touch ~/.z
+    test -d $SHARE/fzf || clone junegunn/fzf $SHARE/fzf
+    $SHARE/fzf/install --all
+    getent passwd $(id -u) | grep -q zsh || chsh -s $(env which zsh)
 }
 
 profile() {
 cat <<'EOF'
 setopt autocd autopushd pushdignoredups
+autoload run-help
 
-# TODO help command
 # TODO pager mouse scroll
 
 export DOCKER_BUILDKIT=1
 export EDITOR=nano
+export HELPDIR=/usr/share/zsh/functions/Misc
 export MINIKUBE_IN_STYLE=false
 export NPM_CONFIG_PREFIX=$NODE
 export PAGER="less -RF"
 export PATH=_PATH_
 export PIPENV_HIDE_EMOJIS=1
+export PIPENV_IGNORE_VIRTUALENVS=1
 export REPORTMEMORY=10240
 export REPORTTIME=5
 export TIMEFMT="$TIMEFMT mem %M"
@@ -51,6 +55,7 @@ alias d="dirs -v | head -5"
 alias grep="grep --color=auto --perl-regexp \
     --exclude={.coverage} \
     --exclude-dir={.git,.npm,node_modules,htmlcov}"
+alias help=run-help
 alias ls="exa -ahl --git --group-directories-first --time-style=long-iso"
 alias tldr="tldr -t base16"
 alias top="htop"
@@ -69,7 +74,14 @@ wanip() { curl ifconfig.me && echo; }
 man() { /usr/bin/man "$@" | col -bx | bat -pl man; }
 profile() { zmodload zsh/zprof; "$@"; zprof; }
 
-# TODO consider relying on p10k loading
+load_autocomp() {
+    local CMD="$1"                          # command to autocomplete
+    local COMP_ARGS="${2:-completion zsh}"  # cmd args for printing completion
+    local COMP_FUNC="${3:-__start_$CMD}"    # the completion fn name
+    local COMP_FILE=~/.oh-my-zsh/custom/autocomp.$CMD.zsh
+    test -f $COMP_FILE || { $CMD $=COMP_ARGS > $COMP_FILE && . $COMP_FILE }
+}
+
 lazyload_autocomp() {
     local CMD="$1"                          # command to autocomplete
     local COMP_ARGS="${2:-completion zsh}"  # cmd args for printing completion
@@ -80,13 +92,17 @@ lazyload_autocomp() {
         type $COMP_FUNC >/dev/null 2>&1 || . <(command $CMD $COMP_ARGS)
     }"
 }
-lazyload_autocomp jira --completion-script-zsh _jira_bash_autocomplete
-lazyload_autocomp pip "completion --zsh" _pip_completion
-lazyload_autocomp pipenv --completion _pipenv
-lazyload_autocomp kubectl
-lazyload_autocomp minikube
-lazyload_autocomp helm
-lazyload_autocomp skaffold
+
+load_autocomp helm
+load_autocomp jira --completion-script-zsh _jira_bash_autocomplete
+load_autocomp kubectl
+load_autocomp minikube
+load_autocomp pip "completion --zsh" _pip_completion
+load_autocomp pipenv --completion _pipenv
+load_autocomp skaffold
+
+# load git-completion
+zstyle ':completion:*:*:git:*' script ~/.oh-my-zsh/custom/git-completion.bash
 
 # zsh-autosuggestions slow paste fix
 # https://github.com/zsh-users/zsh-autosuggestions/issues/238#issuecomment-389324292
@@ -99,6 +115,7 @@ pastefinish() {
 }
 zstyle :bracketed-paste-magic paste-init pasteinit
 zstyle :bracketed-paste-magic paste-finish pastefinish
+
 EOF
 }
 

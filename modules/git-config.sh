@@ -13,20 +13,10 @@ install() {
         gitconf user.email "$GIT_EMAIL"
     )
 
-    gitconf alias.a     "add -p"
-    gitconf alias.amend "commit -a --amend"
-    gitconf alias.c     "commit"
-    gitconf alias.cm    "commit -am"
-    gitconf alias.co    "checkout"
-    gitconf alias.cob   "checkout -b"
-    gitconf alias.d     "diff"
-    gitconf alias.dc    "diff --cached"
-    gitconf alias.f     "fetch -p"
     gitconf alias.lg    "log --abbrev-commit --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'"
-    gitconf alias.p     "push"
-    gitconf alias.patch "!git --no-color --no-pager diff"
+    gitconf alias.diff! "diff --no-color --no-pager"
     gitconf alias.undo  "reset HEAD~1 --mixed"
-    gitconf alias.alias "!git config --get-regexp ^alias\. | sed -E 's/^alias.//;s/ /\t= /'"
+    gitconf alias.alias "config --get-regexp ^alias\. | sed -E 's/^alias.//;s/ /\t= /'"
 
     gitconf core.pager  "diff-so-fancy | less --tabs=4 -RFX"
     gitconf diff-so-fancy.rulerWidth 47

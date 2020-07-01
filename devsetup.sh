@@ -17,6 +17,7 @@ DEPENDS=(
 INCLUDE=()
 EXCLUDE=()
 FORCE=false
+NODEPS=false
 DRYRUN=false
 SUDO=false
 
@@ -29,6 +30,7 @@ main() {
         -i|--include)   INCLUDE+=($2); shift;;
         -x|--exclude)   EXCLUDE+=($2); shift;;
         -f|--force)     FORCE=true;;
+        -D|--no-deps)   NODEPS=true;;
         --dry-run)      DRYRUN=true;;
         *)              fail "invalid argument: $1 (run $0 help for usage)";;
     esac && shift
@@ -46,19 +48,23 @@ main() {
         MODULES=("${MODULES[@]/$MOD}")
     done
 
-    # build dependency-ordered list of modules to install
-    INSTALL=()
-    for MOD in "${MODULES[@]}"; do
-        INSTALL+=("apt-packages $MOD")
-    done
-    for DEP in "${DEPENDS[@]}"; do
-        MOD1=$(echo $DEP | sed 's| .*||')
-        MOD2=$(echo $DEP | sed 's|.* ||')
-        MOD1_=$(printf "%s\n" "${MODULES[@]}" | grep $MOD1 || echo $MOD1)
-        MOD2_=$(printf "%s\n" "${MODULES[@]}" | grep $MOD2 || true)
-        test -z "$MOD2_" || INSTALL+=("$MOD1_ $MOD2_")
-    done
-    INSTALL=($(printf "%s\n" "${INSTALL[@]}" | tsort))
+    if $NODEPS; then
+        INSTALL=("${MODULES[@]}")
+    else
+        info "Resolving dependencies"
+        INSTALL=()
+        for MOD in "${MODULES[@]}"; do
+            INSTALL+=("apt-packages $MOD")
+        done
+        for DEP in "${DEPENDS[@]}"; do
+            MOD1=$(echo $DEP | sed 's| .*||')
+            MOD2=$(echo $DEP | sed 's|.* ||')
+            MOD1_=$(printf "%s\n" "${MODULES[@]}" | grep $MOD1 || echo $MOD1)
+            MOD2_=$(printf "%s\n" "${MODULES[@]}" | grep $MOD2 || true)
+            test -z "$MOD2_" || INSTALL+=("$MOD1_ $MOD2_")
+        done
+        INSTALL=($(printf "%s\n" "${INSTALL[@]}" | tsort))
+    fi
     info "Gathered install modules ${INSTALL[@]}"
 
     # define and create dirs
@@ -101,7 +107,8 @@ Options:
   -i, --include MOD[=VER]   Only install explicitly whitelisted modules
                             Optionally define module version to install
   -x, --exclude MOD         Skip installing explicitly blacklisted modules
-  -f, --force               Force tool (re-)installs even if already present
+  -f, --force               Force reinstalls even if already present
+  -D, --no-deps             Skip installing dependencies
       --dry-run             Only print what would be installed
 
 EOF
@@ -119,7 +126,7 @@ curl() { env curl -fLSs --retry 2 --connect-timeout 5 "$@"; }
 grep() { env grep -P "$@"; }
 sed() { env sed -E "$@"; }
 which() { quiet command -v $1; }
-clone() { git clone --depth 1 https://github.com/$1.git "$@"; }
+clone() { git clone --depth 1 https://github.com/$1.git "${@:2}"; }
 
 # logging helpers
 log() { printf "%s${EOL:-\n}" "$*" >&2; }
@@ -138,7 +145,7 @@ install() {(  # install item from ./modules
     VERSION=$(echo $1 | grep '=' | sed 's|.*=||' || true)
     . $DIR/modules/$MOD.sh
     if $FORCE || ! is_installed; then
-        info "Installing $MOD $(! $DRYRUN || echo '(dry-run)')"
+        info "Installing $MOD$($DRYRUN && echo ' (dry-run)' || true)"
         test -z "$VERSION" || info "Using version override $VERSION"
         $DRYRUN || install
     else

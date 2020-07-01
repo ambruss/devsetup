@@ -19,7 +19,6 @@ install() {
 configure() {
     $VENV/bin/ipython profile create
     sed_ipy() { sed -i "s|^#$1.*|$1 = $2|" ~/.ipython/profile_default/ipython_config.py; }
-    sed_ipy c.InteractiveShell.autocall 1  # TODO
     sed_ipy c.InteractiveShellApp.extensions "['autoreload']"
     sed_ipy c.InteractiveShellApp.exec_lines "['%autoreload 2']"
     sed_ipy c.TerminalIPythonApp.display_banner False
@@ -28,8 +27,7 @@ configure() {
     sed_ipy c.TerminalInteractiveShell.term_title_format "'ipy {cwd}'"
     sed_ipy c.Completer.greedy True
     cat >~/.ipython/profile_default/startup/startup.py <<EOF
-from pprint import pprint as pp
-p = print
+# TODO
 EOF
 }
 
@@ -59,11 +57,13 @@ VENV_PACKAGES=(
     pip-compile-multi
     pipenv
     poetry
+    pre-commit
     psutil
     pydicom
-    pynetdicom
     pyjq
+    pynetdicom
     pynvim
+    pyppeteer
     pyqt5
     pytest
     pytest-bandit
@@ -76,9 +76,9 @@ VENV_PACKAGES=(
     pytest-mypy
     pytest-pylint
     python-dateutil
+    pytimeparse
     pytz
     pyyaml
-    pyppeteer
     requests
     requests-html
     scikit-learn
