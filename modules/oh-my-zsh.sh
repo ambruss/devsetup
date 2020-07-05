@@ -52,7 +52,8 @@ export TIMEFMT="$TIMEFMT mem %M"
 
 alias cat="bat"
 alias d="dirs -v | head -5"
-alias grep="grep --color=auto --perl-regexp \
+alias grep="grep \
+    --color=auto \
     --exclude={.coverage} \
     --exclude-dir={.git,.npm,node_modules,htmlcov}"
 alias help=run-help
@@ -68,38 +69,46 @@ alias v="xclip -o"
 alias encrypt="gpg --armor --symmetric"
 alias decrypt="gpg"
 
-diff() { /usr/bin/diff --color=always "$@" | diff-so-fancy; }
+unalias diff
+diff() { diff --color "$@" | diff-so-fancy; }
 lanip() { ip -o route get to 8.8.8.8 | sed -E "s/.*src ([0-9.]+).*/\\1/"; }
 wanip() { curl ifconfig.me && echo; }
 man() { /usr/bin/man "$@" | col -bx | bat -pl man; }
-profile() { zmodload zsh/zprof; "$@"; zprof; }
+zprof() { zmodload zsh/zprof && "$@" && zprof; }
 
-load_autocomp() {
+# always load completion on shell startup
+load_completion() {
     local CMD="$1"                          # command to autocomplete
     local COMP_ARGS="${2:-completion zsh}"  # cmd args for printing completion
     local COMP_FUNC="${3:-__start_$CMD}"    # the completion fn name
-    local COMP_FILE=~/.oh-my-zsh/custom/autocomp.$CMD.zsh
-    test -f $COMP_FILE || { $CMD $=COMP_ARGS > $COMP_FILE && . $COMP_FILE }
+    local COMP_FILE=~/.oh-my-zsh/custom/completion-$CMD.zsh
+    test -f $COMP_FILE || $CMD $=COMP_ARGS > $COMP_FILE
+    type $COMP_FUNC >/dev/null 2>&1 || . $COMP_FILE
 }
 
-lazyload_autocomp() {
+# shadow cmd to load completion after first use
+lazyload_completion() {
     local CMD="$1"                          # command to autocomplete
     local COMP_ARGS="${2:-completion zsh}"  # cmd args for printing completion
     local COMP_FUNC="${3:-__start_$CMD}"    # the completion fn name
-    # shadow cmd to load completion after first use
+    local COMP_FILE=~/.oh-my-zsh/custom/completion.$CMD
     eval "$1() {
         command $CMD \"\$@\"
-        type $COMP_FUNC >/dev/null 2>&1 || . <(command $CMD $COMP_ARGS)
+        local EXIT_CODE=$?
+        test -f $COMP_FILE || $CMD $=COMP_ARGS > $COMP_FILE
+        type $COMP_FUNC >/dev/null 2>&1 || . $COMP_FILE
+        return $EXIT_CODE
     }"
 }
 
-load_autocomp helm
-load_autocomp jira --completion-script-zsh _jira_bash_autocomplete
-load_autocomp kubectl
-load_autocomp minikube
-load_autocomp pip "completion --zsh" _pip_completion
-load_autocomp pipenv --completion _pipenv
-load_autocomp skaffold
+# consider lazy load / deselecting some for speed
+load_completion helm
+load_completion jira --completion-script-zsh _jira_bash_autocomplete
+load_completion kubectl
+load_completion minikube
+load_completion pip "completion --zsh" _pip_completion
+load_completion pipenv --completion _pipenv
+load_completion skaffold
 
 # load git-completion
 zstyle ':completion:*:*:git:*' script ~/.oh-my-zsh/custom/git-completion.bash

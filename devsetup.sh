@@ -5,8 +5,8 @@ set -o nounset
 set -o pipefail
 
 VERSION_RE="v?[0-9]+(\.[0-9]+)+"
-DIR=$(cd $(dirname $0) && pwd)
-MODULES=($(find $DIR/modules -type f -printf "%f\n" | sed 's|\.sh||' | sort))
+DIR=$(cd "$(dirname "$0")" && pwd)
+mapfile -t MODULES < <(find "$DIR/modules" -type f -printf "%f\n" | sed 's|\.sh||' | sort)
 DEPENDS=(
     "chsh-zsh oh-my-zsh"
     "diff-so-fancy git-config"
@@ -27,8 +27,8 @@ main() {
     case $1 in
         -h|--help|help) help && exit;;
         -l|--list|list) list && exit;;
-        -i|--include)   INCLUDE+=($2); shift;;
-        -x|--exclude)   EXCLUDE+=($2); shift;;
+        -i|--include)   INCLUDE+=("$2"); shift;;
+        -x|--exclude)   EXCLUDE+=("$2"); shift;;
         -f|--force)     FORCE=true;;
         -D|--no-deps)   NODEPS=true;;
         --dry-run)      DRYRUN=true;;
@@ -38,8 +38,8 @@ main() {
 
     # validate modules
     for MOD in "${INCLUDE[@]}" "${EXCLUDE[@]}"; do
-        NAME=$(echo $MOD | sed 's|=.*||')  # strip any version override
-        echo " ${MODULES[@]} " | grep -q " $NAME " || fail "invalid module $NAME"
+        NAME=${MOD/=*/}  # strip any version override
+        echo " ${MODULES[*]} " | grep -q " $NAME " || fail "invalid module $NAME"
     done
 
     # apply in/exclusions
@@ -57,15 +57,15 @@ main() {
             INSTALL+=("apt-packages $MOD")
         done
         for DEP in "${DEPENDS[@]}"; do
-            MOD1=$(echo $DEP | sed 's| .*||')
-            MOD2=$(echo $DEP | sed 's|.* ||')
-            MOD1_=$(printf "%s\n" "${MODULES[@]}" | grep $MOD1 || echo $MOD1)
-            MOD2_=$(printf "%s\n" "${MODULES[@]}" | grep $MOD2 || true)
+            MOD1=${DEP/ */}
+            MOD2=${DEP/* /}
+            MOD1_=$(printf "%s\n" "${MODULES[@]}" | grep "$MOD1" || echo "$MOD1")
+            MOD2_=$(printf "%s\n" "${MODULES[@]}" | grep "$MOD2" || true)
             test -z "$MOD2_" || INSTALL+=("$MOD1_ $MOD2_")
         done
-        INSTALL=($(printf "%s\n" "${INSTALL[@]}" | tsort))
+        mapfile -t INSTALL < <(printf "%s\n" "${INSTALL[@]}" | tsort)
     fi
-    info "Gathered install modules ${INSTALL[@]}"
+    info "Gathered install modules ${INSTALL[*]}"
 
     # define and create dirs
     CONFIG=$HOME/.config
@@ -75,17 +75,17 @@ main() {
     VENV=$LOCAL/venv
     NODE=$LOCAL/node
     GO=$LOCAL/go
-    mkdir -p $BIN $CONFIG $SHARE
+    mkdir -p "$BIN" "$CONFIG" "$SHARE"
 
     # create and use tempdir (and clean up on exit)
     TMP=$(mktemp --directory --suffix .$$)
-    cd $TMP
-    trap "rm -rf $TMP; kill 0" EXIT
+    cd "$TMP"
+    trap 'rm -rf $TMP; kill 0' EXIT
     # immediately enable running installed modules
     export PATH=$VENV/bin:$NODE/bin:$GO/bin:$BIN:$PATH
     # install each module
-    for MOD in ${INSTALL[@]}; do
-        install $MOD
+    for MOD in "${INSTALL[@]}"; do
+        install "$MOD"
     done
 
     info "Devsetup complete"
@@ -116,7 +116,7 @@ EOF
 
 list() {
     echo "Available modules:"
-    for MOD in ${MODULES[@]}; do
+    for MOD in "${MODULES[@]}"; do
         echo "  - $MOD"
     done
 }
@@ -125,8 +125,8 @@ list() {
 curl() { env curl -fLSs --retry 2 --connect-timeout 5 "$@"; }
 grep() { env grep -P "$@"; }
 sed() { env sed -E "$@"; }
-which() { quiet command -v $1; }
-clone() { git clone --depth 1 https://github.com/$1.git "${@:2}"; }
+which() { quiet command -v "$1"; }
+clone() { git clone --depth 1 "https://github.com/$1.git" "${@:2}"; }
 
 # logging helpers
 log() { printf "%s${EOL:-\n}" "$*" >&2; }
@@ -137,16 +137,18 @@ C_NULL=$(tput sgr0)
 info() { log "[${C_INFO}INFO${C_NULL}]" "$@"; }
 warn() { log "[${C_WARN}WARNING${C_NULL}]" "$@"; }
 error() { log "[${C_ERROR}ERROR${C_NULL}]" "$@"; }
-fail() { error "$@"; exit ${EXIT_CODE:-1}; }
+fail() { error "$@"; exit "${EXIT_CODE:-1}"; }
 quiet() { "$@" >/dev/null 2>&1; }
 
 install() {(  # install item from ./modules
-    MOD=$(echo $1 | sed 's|=.*||')
-    VERSION=$(echo $1 | grep '=' | sed 's|.*=||' || true)
-    . $DIR/modules/$MOD.sh
+    MOD=${1/=*/}
+    VER=${1/$MOD/}
+    # shellcheck disable=SC1090
+    . "$DIR/modules/$MOD.sh"
     if $FORCE || ! is_installed; then
+        # shellcheck disable=SC2015
         info "Installing $MOD$($DRYRUN && echo ' (dry-run)' || true)"
-        test -z "$VERSION" || info "Using version override $VERSION"
+        test -z "$VER" || info "Using version override $VER"
         $DRYRUN || install
     else
         info "Skipping $MOD (already installed)"
@@ -154,13 +156,14 @@ install() {(  # install item from ./modules
 )}
 
 latest() {  # get latest version string from a release page
-    test -z "${VERSION:-}" || { echo $VERSION && return; }
+    test -z "${VERSION:-}" || { echo "$VERSION" && return; }
     URL=$1
     REGEX="${2:-tag/$VERSION_RE}"
-    echo $1 | grep -q "^http" || URL=https://github.com/$1/releases
-    curl $URL | grep -o "[^0-9.]*$VERSION_RE[^0-9.]*" >VERS
-    VER=$(cat VERS | grep -o -- "$REGEX" | grep -o "$VERSION_RE" | sort -rV | head -n1)
-    test -n $VER && echo $VER || fail "Could not retrieve version from $URL"
+    echo "$1" | grep -q "^http" || URL=https://github.com/$1/releases
+    curl "$URL" | grep -o "[^0-9.]*${VERSION_RE}[^0-9.]*" >VERS
+    VER=$(grep -o -- "$REGEX" VERS | grep -o "$VERSION_RE" | sort -rV | head -n1)
+    # shellcheck disable=SC2015
+    test -n "$VER" && echo "$VER" || fail "Could not retrieve version from $URL"
 }
 
 sudo() {  # maintain sudo after 1st prompt

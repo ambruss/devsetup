@@ -16,8 +16,15 @@ install() {
 }
 
 NPM_PACKAGES=(
+    dockerfilelint
+    eslint
     fkill
+    jsonlint
+    markdownlint-cli
     speed-test
+    standard
+    @stoplight/spectral
+    stylelint-config-standard
     tfa
     tldr
 )

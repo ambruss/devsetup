@@ -71,6 +71,29 @@ cat <<EOF >"$SUBL_SETTINGS/MarkdownTableFormatter.sublime-settings"
 }
 EOF
 
+cat <<EOF >"$SUBL_SETTINGS/Side Bar.sublime-settings"
+{
+    "confirm_before_deleting": false,
+    "confirm_before_permanently_deleting": false,
+    "disabled_menuitem_edit": true,
+    "disabled_menuitem_edit_to_right": true,
+    "disabled_menuitem_open_run": true,
+    "disabled_menuitem_open_in_browser": true,
+    "disabled_menuitem_open_in_new_window": true,
+    "disabled_menuitem_copy_name": true,
+    "disabled_menuitem_copy_path": true,
+    "disabled_menuitem_copy_path_windows": true,
+    "disabled_menuitem_copy_dir_path": true,
+    "disabled_menuitem_paste_in_parent": true,
+    "disabled_menuitem_empty": true,
+    "disabled_menuitem_folder_save": true,
+    "disabled_menuitem_folder_close": true,
+    "default_browser": "chrome",
+    "disable_send_to_trash": true,
+    "i_donated_to_sidebar_enhancements_developer": "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DD4SL2AHYJGBW"
+}
+EOF
+
 cat <<EOF >"$SUBL_SETTINGS/sublack.sublime-settings"
 {
     "black_command": "$VENV/bin/black",
@@ -78,8 +101,10 @@ cat <<EOF >"$SUBL_SETTINGS/sublack.sublime-settings"
 }
 EOF
 
-# TODO sidebar buttons disable
-# TODO terraform format
-# TODO python import sort
+cat <<EOF >"$SUBL_SETTINGS/trailing_spaces.sublime-settings"
+{
+    "trim_on_save": true
+}
+EOF
 
 }
