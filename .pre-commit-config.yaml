@@ -6,3 +6,8 @@ repos:
     language: system
     entry: shellcheck
     types: [shell]
+  - id: markdownlint
+    name: markdownlint
+    language: system
+    entry: markdownlint
+    types: [markdown]
