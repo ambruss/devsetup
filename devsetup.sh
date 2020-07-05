@@ -32,14 +32,14 @@ main() {
         -f|--force)     FORCE=true;;
         -D|--no-deps)   NODEPS=true;;
         --dry-run)      DRYRUN=true;;
-        *)              fail "invalid argument: $1 (run $0 help for usage)";;
+        *)              fail "Invalid argument: $1 (run $0 help for usage)";;
     esac && shift
     done
 
     # validate modules
     for MOD in "${INCLUDE[@]}" "${EXCLUDE[@]}"; do
         NAME=${MOD/=*/}  # strip any version override
-        echo " ${MODULES[*]} " | grep -q " $NAME " || fail "invalid module $NAME"
+        echo " ${MODULES[*]} " | grep -q " $NAME " || fail "Invalid module $NAME"
     done
 
     # apply in/exclusions

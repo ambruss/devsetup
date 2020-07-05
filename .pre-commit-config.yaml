@@ -1,0 +1,8 @@
+repos:
+- repo: local
+  hooks:
+  - id: shellcheck
+    name: shellcheck
+    language: system
+    entry: shellcheck
+    types: [shell]
