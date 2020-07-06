@@ -1,11 +1,13 @@
+#!/usr/bin/env bash
+
 is_installed() {
     test -f ~/.nanorc
 }
 
 install() {
     NANORC_URL=https://raw.githubusercontent.com/scopatz/nanorc/master/install.sh
-    curl $NANORC_URL | sh
-    find ~/.nano -type f | xargs sed -i "s/normal/white/g"
+    curl "$NANORC_URL" | sh
+    find ~/.nano -type f -print0 | xargs --null sed -i "s/normal/white/g"
     echo "$NANORC" >>~/.nanorc
 }
 

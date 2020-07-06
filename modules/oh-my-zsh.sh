@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 is_installed() {
     test -d ~/.oh-my-zsh
 }
@@ -6,28 +8,26 @@ install() {
     rm -rf ~/.zshrc ~/.oh-my-zsh
     OHMYZSH_DIR=~/.oh-my-zsh/custom
     OHMYZSH_URL=https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh
-    curl $OHMYZSH_URL | sh
-    clone zsh-users/zsh-autosuggestions $OHMYZSH_DIR/plugins/zsh-autosuggestions
-    clone zsh-users/zsh-syntax-highlighting $OHMYZSH_DIR/plugins/zsh-syntax-highlighting
-    clone romkatv/powerlevel10k $OHMYZSH_DIR/themes/powerlevel10k
-    (
-        cd $OHMYZSH_DIR
-        GITCOMP_URL=https://raw.githubusercontent.com/git/git/master/contrib/completion
-        curl -o git-completion.bash $GITCOMP_URL/git-completion.bash
-        curl -o _git $GITCOMP_URL/git-completion.zsh
-    )
+    curl "$OHMYZSH_URL" | sh
+    clone zsh-users/zsh-autosuggestions "$OHMYZSH_DIR/plugins/zsh-autosuggestions"
+    clone zsh-users/zsh-syntax-highlighting "$OHMYZSH_DIR/plugins/zsh-syntax-highlighting"
+    clone romkatv/powerlevel10k "$OHMYZSH_DIR/themes/powerlevel10k"
+    cd "$OHMYZSH_DIR" || fail "Couldn't cd into $OHMYZSH_DIR"
+    GITCOMP_URL=https://raw.githubusercontent.com/git/git/master/contrib/completion
+    curl -o git-completion.bash "$GITCOMP_URL/git-completion.bash"
+    curl -o _git "$GITCOMP_URL/git-completion.zsh"
     sed_zshrc() { sed -i "s|^(# )?$1=.*\$|$1=$2|" ~/.zshrc; }
     sed_zshrc ZSH_THEME powerlevel10k/powerlevel10k
     sed_zshrc DISABLE_UPDATE_PROMPT true
     sed_zshrc HIST_STAMPS yyyy-mm-dd
     sed_zshrc plugins "(extract git httpie z zsh-autosuggestions zsh-syntax-highlighting)"
     echo '[ -f ~/.p10k.zsh ] && source ~/.p10k.zsh' >>~/.zshrc
-    profile | sed "s|_PATH_|$VENV/bin:$NODE/bin:$BIN:\$PATH|" >$OHMYZSH_DIR/profile.zsh
+    profile | sed "s|_PATH_|$VENV/bin:$NODE/bin:$BIN:\$PATH|" >"$OHMYZSH_DIR/profile.zsh"
     p10k >~/.p10k.zsh
     touch ~/.z
-    test -d $SHARE/fzf || clone junegunn/fzf $SHARE/fzf
-    $SHARE/fzf/install --all
-    getent passwd $(id -u) | grep -q zsh || chsh -s $(env which zsh)
+    test -d "$SHARE/fzf" || clone junegunn/fzf "$SHARE/fzf"
+    "$SHARE/fzf/install" --all
+    getent passwd "$(id -u)" | grep -q zsh || chsh -s "$(env which zsh)"
 }
 
 profile() {

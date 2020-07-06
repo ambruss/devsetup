@@ -1,11 +1,14 @@
+#!/usr/bin/env bash
+
 is_installed() {
     which git-crypt
 }
 
 install() {
-    test -d $SHARE/git-crypt || clone AGWA/git-crypt.git $SHARE/git-crypt
-    cd $SHARE/git-crypt
+    DIR="$SHARE/git-crypt"
+    test -d "$DIR" || clone AGWA/git-crypt "$DIR"
+    cd "$DIR" || fail "Couldn't cd into $DIR"
     git pull
     make
-    make install PREFIX=$LOCAL
+    make install "PREFIX=$LOCAL"
 }

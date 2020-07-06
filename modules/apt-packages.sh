@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 is_installed() {
     apt list --installed 2>/dev/null | sed -E 's|([^/]+)/.*|\1|' >apt.list
     for PACKAGE in "${APT_PACKAGES[@]}"; do

@@ -1,15 +1,17 @@
+#!/usr/bin/env bash
+
 is_installed() {
     false
 }
 
 install() {
     test -n "$(gitconf --get user.name)" || (
-        read -p "git user: " GIT_USER
+        read -rp "git user: " GIT_USER
         gitconf user.name "$GIT_USER"
     )
 
     test -n "$(gitconf --get user.email)" || (
-        read -p "git email: " GIT_EMAIL
+        read -rp "git email: " GIT_EMAIL
         gitconf user.email "$GIT_EMAIL"
     )
 

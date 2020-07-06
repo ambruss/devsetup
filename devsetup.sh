@@ -8,10 +8,8 @@ VERSION_RE="v?[0-9]+(\.[0-9]+)+"
 DIR=$(cd "$(dirname "$0")" && pwd)
 mapfile -t MODULES < <(find "$DIR/modules" -type f -printf "%f\n" | sed 's|\.sh||' | sort)
 DEPENDS=(
-    "chsh-zsh oh-my-zsh"
     "diff-so-fancy git-config"
     "kubectl minikube"
-    "oh-my-zsh fzf"
     "python venv"
 )
 INCLUDE=()
@@ -54,7 +52,7 @@ main() {
         info "Resolving dependencies"
         INSTALL=()
         for MOD in "${MODULES[@]}"; do
-            INSTALL+=("apt-packages $MOD")
+            test -z "$MOD" || INSTALL+=("apt-packages $MOD")
         done
         for DEP in "${DEPENDS[@]}"; do
             MOD1=${DEP/ */}
@@ -160,8 +158,13 @@ latest() {  # get latest version string from a release page
     URL=$1
     REGEX="${2:-tag/$VERSION_RE}"
     echo "$1" | grep -q "^http" || URL=https://github.com/$1/releases
-    curl "$URL" | grep -o "[^0-9.]*${VERSION_RE}[^0-9.]*" >VERS
-    VER=$(grep -o -- "$REGEX" VERS | grep -o "$VERSION_RE" | sort -rV | head -n1)
+    VER=$(curl "$URL" \
+        | grep -o "[^0-9.]*${VERSION_RE}[^0-9.]*" \
+        | grep -o -- "$REGEX" \
+        | grep -v "$VERSION_RE-(beta|dev|rc)" \
+        | grep -o "$VERSION_RE" \
+        | sort -rV \
+        | head -n1)
     # shellcheck disable=SC2015
     test -n "$VER" && echo "$VER" || fail "Could not retrieve version from $URL"
 }

@@ -1,23 +1,25 @@
+#!/usr/bin/env bash
+
 is_installed() {
-    test -d $VENV || return 1
-    $VENV/bin/pip freeze | sed -E 's|([^=]+)=.*|\1|' >pip.list || return 1
-    for PACKAGE in ${VENV_PACKAGES[@]}; do
+    test -d "$VENV" || return 1
+    "$VENV/bin/pip" freeze | sed -E 's|([^=]+)=.*|\1|' >pip.list || return 1
+    for PACKAGE in "${VENV_PACKAGES[@]}"; do
         grep -q "^$PACKAGE\$" pip.list || return 1
     done
     return 0
 }
 
 install() {
-    ! $FORCE || rm -rf $VENV
+    ! $FORCE || rm -rf "$VENV"
     PY_BIN=$(find /usr/local/bin -name 'python*' | grep -v config | sort | tail -n1)
-    test -d $VENV || $PY_BIN -m venv $VENV
-    $VENV/bin/pip install -U pip setuptools
-    $VENV/bin/pip install -U "${VENV_PACKAGES[@]}"
+    test -d "$VENV" || "$PY_BIN" -m venv "$VENV"
+    "$VENV/bin/pip" install -U pip setuptools
+    "$VENV/bin/pip" install -U "${VENV_PACKAGES[@]}"
     configure
 }
 
 configure() {
-    $VENV/bin/ipython profile create
+    "$VENV/bin/ipython" profile create
     sed_ipy() { sed -i "s|^#$1.*|$1 = $2|" ~/.ipython/profile_default/ipython_config.py; }
     sed_ipy c.InteractiveShellApp.extensions "['autoreload']"
     sed_ipy c.InteractiveShellApp.exec_lines "['%autoreload 2']"
@@ -92,7 +94,7 @@ VENV_PACKAGES=(
     dicomweb-client
     docker-compose
     fastapi
-    fuzzywuzzy[speedup]
+    "fuzzywuzzy[speedup]"
     httpie
     invoke
     ipython
@@ -136,7 +138,7 @@ VENV_PACKAGES=(
     scrapy
     sh
     sqlalchemy
-    typer[all]
+    "typer[all]"
     yamllint
     yapf
     yappi

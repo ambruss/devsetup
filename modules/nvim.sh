@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 is_installed() {
     which nvim
 }
@@ -5,17 +7,17 @@ is_installed() {
 install() {
     NVIM_VER=$(latest neovim/neovim)
     NVIM_URL=https://github.com/neovim/neovim/releases/download/$NVIM_VER/nvim.appimage
-    curl -o $BIN/nvim $NVIM_URL
-    chmod +x $BIN/nvim
-    rm -rf $CONFIG/nvim $SHARE/nvim
+    curl -o "$BIN/nvim" "$NVIM_URL"
+    chmod +x "$BIN/nvim"
+    rm -rf "$CONFIG/nvim" "$SHARE/nvim"
     curl -O https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-    mkdir -p $CONFIG/nvim $SHARE/nvim/site/autoload
-    mv -f plug.vim $SHARE/nvim/site/autoload
+    mkdir -p "$CONFIG/nvim" "$SHARE/nvim/site/autoload"
+    mv -f plug.vim "$SHARE/nvim/site/autoload"
     configure
 }
 
 configure() {
-cat <<EOF >$CONFIG/nvim/init.vim
+cat <<EOF >"$CONFIG/nvim/init.vim"
 call plug#begin('$SHARE/nvim/plugged')
 Plug 'davidhalter/jedi-vim', {'do': ':UpdateRemotePlugins'}
 Plug 'jiangmiao/auto-pairs', {'do': ':UpdateRemotePlugins'}

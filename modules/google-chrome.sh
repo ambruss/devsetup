@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 is_installed() {
     which google-chrome
 }
