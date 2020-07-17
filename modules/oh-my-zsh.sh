@@ -20,7 +20,7 @@ install() {
     sed_zshrc ZSH_THEME powerlevel10k/powerlevel10k
     sed_zshrc DISABLE_UPDATE_PROMPT true
     sed_zshrc HIST_STAMPS yyyy-mm-dd
-    sed_zshrc plugins "(extract git httpie z zsh-autosuggestions zsh-syntax-highlighting)"
+    sed_zshrc plugins "(extract httpie z zsh-autosuggestions zsh-syntax-highlighting)"
     echo '[ -f ~/.p10k.zsh ] && source ~/.p10k.zsh' >>~/.zshrc
     profile | sed "s|_PATH_|$VENV/bin:$NODE/bin:$BIN:\$PATH|" >"$OHMYZSH_DIR/profile.zsh"
     p10k >~/.p10k.zsh
@@ -106,8 +106,6 @@ load_completion helm
 load_completion jira --completion-script-zsh _jira_bash_autocomplete
 load_completion kubectl
 load_completion minikube
-load_completion pip "completion --zsh" _pip_completion
-load_completion pipenv --completion _pipenv
 load_completion skaffold
 
 # load git-completion

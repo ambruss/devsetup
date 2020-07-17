@@ -9,8 +9,10 @@ is_installed() {
 }
 
 install() {
+    sudo add-apt-repository -y ppa:yunnxx/elementary
     sudo apt-get -qq update
     sudo apt-get -qq install -y "${APT_PACKAGES[@]}"
+    sudo sed -i "s/GNOME;\$/GNOME;Pantheon;/" /etc/xdg/autostart/indicator-application.desktop
     printf "[User]\nSystemAccount=true\n" | sudo tee /var/lib/AccountsService/users/libvirt-qemu
     sudo systemctl restart accounts-daemon.service
 }
@@ -27,6 +29,8 @@ APT_PACKAGES=(
     dstat
     git
     htop
+    indicator-application
+    kazam
     libbz2-dev
     libguestfs-tools
     libncurses5-dev
@@ -49,6 +53,7 @@ APT_PACKAGES=(
     virt-top
     virtinst
     wget
+    wingpanel-indicator-ayatana
     xclip
     xsltproc
     xz-utils
