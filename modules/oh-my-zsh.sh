@@ -75,6 +75,12 @@ lanip() { ip -o route get to 8.8.8.8 | sed -E "s/.*src ([0-9.]+).*/\\1/"; }
 wanip() { curl ifconfig.me && echo; }
 man() { /usr/bin/man "$@" | col -bx | bat -pl man; }
 zprof() { zmodload zsh/zprof && "$@" && zprof; }
+zsh_history_fix() {
+    mv ~/.zsh_history ~/.zsh_history_bad
+    strings ~/.zsh_history_bad > ~/.zsh_history
+    fc -R ~/.zsh_history
+    rm ~/.zsh_history_bad
+}
 
 # always load completion on shell startup
 load_completion() {
@@ -82,7 +88,7 @@ load_completion() {
     local COMP_ARGS="${2:-completion zsh}"  # cmd args for printing completion
     local COMP_FUNC="${3:-__start_$CMD}"    # the completion fn name
     local COMP_FILE=~/.oh-my-zsh/custom/completion-$CMD.zsh
-    test -f $COMP_FILE || $CMD $=COMP_ARGS > $COMP_FILE
+    test -f $COMP_FILE || $CMD $=COMP_ARGS >$COMP_FILE
     type $COMP_FUNC >/dev/null 2>&1 || . $COMP_FILE
 }
 
