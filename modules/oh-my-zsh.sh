@@ -35,14 +35,12 @@ cat <<'EOF'
 setopt autocd autopushd pushdignoredups
 autoload run-help
 
-# TODO pager mouse scroll
-
 export DOCKER_BUILDKIT=1
 export EDITOR=nano
 export HELPDIR=/usr/share/zsh/functions/Misc
 export MINIKUBE_IN_STYLE=false
 export NPM_CONFIG_PREFIX=$NODE
-export PAGER="less -RF"
+export PAGER="less -RF"  # TODO mouse scroll
 export PATH=_PATH_
 export PIPENV_HIDE_EMOJIS=1
 export PIPENV_IGNORE_VIRTUALENVS=1

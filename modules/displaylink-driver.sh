@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    test -f "$CONF"
+    quiet modinfo evdi
 }
 
 install() {
@@ -13,15 +13,4 @@ install() {
     chmod +x ./displaylink-driver*.run
     # TODO make this non-interactive
     sudo ./displaylink-driver*.run
-    echo "$CONFIG" | sudo tee "$CONF"
 }
-
-CONF=/usr/share/X11/xorg.conf.d/20-displaylink.conf
-CONFIG="$(cat <<EOF
-Section "Device"
-  Identifier "DisplayLink"
-  Driver "modesetting"
-  Option "PageFlip" "false"
-EndSection
-EOF
-)"
