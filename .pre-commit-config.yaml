@@ -1,13 +1,19 @@
+---
 repos:
-- repo: local
-  hooks:
-  - id: shellcheck
-    name: shellcheck
-    language: system
-    entry: shellcheck
-    types: [shell]
-  - id: markdownlint
-    name: markdownlint
-    language: system
-    entry: markdownlint
-    types: [markdown]
+  - repo: local
+    hooks:
+      - id: markdown-lint
+        name: markdown-lint
+        language: system
+        entry: markdownlint
+        types: [markdown]
+      - id: shell-lint
+        name: shell-lint
+        language: system
+        entry: shellcheck
+        types: [shell]
+      - id: yaml-lint
+        name: yaml-lint
+        language: system
+        entry: yamllint
+        types: [yaml]

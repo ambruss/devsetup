@@ -16,7 +16,7 @@ install() {
     )
 
     gitconf alias.lg    "log --abbrev-commit --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'"
-    gitconf alias.diff! "diff --no-color --no-pager"
+    gitconf alias.diff  "diff --no-color --no-pager"
     gitconf alias.undo  "reset HEAD~1 --mixed"
     gitconf alias.alias "config --get-regexp ^alias\. | sed -E 's/^alias.//;s/ /\t= /'"
 
