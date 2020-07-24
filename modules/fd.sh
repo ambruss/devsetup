@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    which fd
+    cmd fd
 }
 
 install() {

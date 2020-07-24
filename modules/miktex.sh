@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    which miktexsetup
+    cmd miktexsetup
 }
 
 install() {

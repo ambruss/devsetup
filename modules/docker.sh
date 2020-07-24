@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    which docker
+    cmd docker
 }
 
 install() {

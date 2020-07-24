@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    which rg
+    cmd rg
 }
 
 install() {

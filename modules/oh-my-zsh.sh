@@ -27,7 +27,7 @@ install() {
     touch ~/.z
     test -d "$SHARE/fzf" || clone junegunn/fzf "$SHARE/fzf"
     "$SHARE/fzf/install" --all
-    getent passwd "$(id -u)" | grep -q zsh || chsh -s "$(env which zsh)"
+    getent passwd "$(id -u)" | grep -q zsh || chsh -s "$(command -V zsh)"
 }
 
 profile() {

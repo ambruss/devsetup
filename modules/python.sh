@@ -3,7 +3,7 @@
 is_installed() {
     PY_VER=$(python_ver)
     PY_BIN=$(echo "python$PY_VER" | sed 's/\.[0-9]$//')
-    which "$PY_BIN"
+    cmd "$PY_BIN"
 }
 
 install() {

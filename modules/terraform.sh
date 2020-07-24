@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    which terraform
+    cmd terraform
 }
 
 install() {

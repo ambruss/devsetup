@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    which docker-machine
+    cmd docker-machine
 }
 
 install() {

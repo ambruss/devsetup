@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    which git-crypt
+    cmd git-crypt
 }
 
 install() {

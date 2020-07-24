@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    which helm
+    cmd helm
 }
 
 install() {

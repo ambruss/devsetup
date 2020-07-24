@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    which exa
+    cmd exa
 }
 
 install() {

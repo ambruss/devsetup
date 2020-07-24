@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    which diff-so-fancy
+    cmd diff-so-fancy
 }
 
 install() {

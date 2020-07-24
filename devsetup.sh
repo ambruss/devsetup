@@ -123,7 +123,7 @@ list() {
 curl() { env curl -fLSs --retry 2 --connect-timeout 5 "$@"; }
 grep() { env grep -P "$@"; }
 sed() { env sed -E "$@"; }
-which() { quiet command -v "$1"; }
+cmd() { quiet command -v "$1"; }
 clone() { git clone --depth 1 "https://github.com/$1.git" "${@:2}"; }
 
 # logging helpers
