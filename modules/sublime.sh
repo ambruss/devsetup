@@ -46,6 +46,7 @@ cat <<EOF >"$SUBL_SETTINGS/Package Control.sublime-settings"
         "BracketHighlighter",
         "Dockerfile Syntax Highlighting",
         "GitGutter",
+        "KeybindingHelper",
         "Markdown Extended",
         "Markdown Table Formatter",
         "MarkdownTOC",
@@ -55,6 +56,7 @@ cat <<EOF >"$SUBL_SETTINGS/Package Control.sublime-settings"
         "SideBarEnhancements",
         "sublack",
         "Sublime Tutor",
+        "Terminus",
         "Terraform",
         "TrailingSpaces"
     ]
@@ -100,6 +102,14 @@ cat <<EOF >"$SUBL_SETTINGS/sublack.sublime-settings"
 {
     "black_command": "$VENV/bin/black",
     "black_on_save": true
+}
+EOF
+
+cat <<EOF >"$SUBL_SETTINGS/Terminus.sublime-settings"
+{
+    "256color": true,
+    "unix_term": "xterm-256color",
+    "theme": "monokai"
 }
 EOF
 
