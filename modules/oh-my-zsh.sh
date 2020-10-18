@@ -35,6 +35,7 @@ cat <<'EOF'
 setopt autocd autopushd pushdignoredups
 autoload run-help
 
+export CLOUDSDK_PYTHON=/usr/bin/python3.6
 export DOCKER_BUILDKIT=1
 export EDITOR=nano
 export HELPDIR=/usr/share/zsh/functions/Misc
