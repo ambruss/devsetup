@@ -160,8 +160,8 @@ latest() {  # get latest version string from a release page
     echo "$1" | grep -q "^http" || URL=https://github.com/$1/releases
     VER=$(curl "$URL" \
         | grep -o "[^0-9.]*${VERSION_RE}[^0-9.]*" \
+        | grep -v "$VERSION_RE-(alpha|beta|dev|rc)" \
         | grep -o -- "$REGEX" \
-        | grep -v "$VERSION_RE-(beta|dev|rc)" \
         | grep -o "$VERSION_RE" \
         | sort -rV \
         | head -n1)

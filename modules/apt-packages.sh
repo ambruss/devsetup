@@ -9,14 +9,19 @@ is_installed() {
 }
 
 install() {
-    sudo add-apt-repository -y ppa:yunnxx/elementary
+    if ! cmd apt-add-repository; then
+        sudo apt-get update -qq
+        sudo apt-get install -qqy software-properties-common
+    fi
+    sudo apt-add-repository -y ppa:philip.scott/elementary-tweaks
+    sudo apt-add-repository -y ppa:yunnxx/elementary
     sudo apt-get update -qq
     sudo apt-get install -qqy "${APT_PACKAGES[@]}"
+    sudo sh -c "printf '[User]\nSystemAccount=true\n' > /var/lib/AccountsService/users/libvirt-qemu"
+    sudo rm -f /etc/xdg/autostart/nm-applet.desktop
     sudo sed -i "s/GNOME;\$/GNOME;Pantheon;/" /etc/xdg/autostart/indicator-application.desktop
-    printf "[User]\nSystemAccount=true\n" | sudo tee /var/lib/AccountsService/users/libvirt-qemu
     sudo systemctl restart accounts-daemon.service
 }
-
 APT_PACKAGES=(
     apt-transport-https
     autoconf
@@ -27,12 +32,19 @@ APT_PACKAGES=(
     dkms
     dmg2img
     dstat
+    elementary-tweaks
+    gfortran
+    gimp
     git
     htop
     indicator-application
     kazam
+    libblas-dev
     libbz2-dev
     libguestfs-tools
+    libhdf5-100
+    libhdf5-dev
+    liblapack-dev
     libncurses5-dev
     libncursesw5-dev
     libreadline-dev
@@ -43,9 +55,9 @@ APT_PACKAGES=(
     llvm
     nano
     ncdu
+    pkg-config
     qemu
     qemu-kvm
-    software-properties-common
     tmux
     tree
     uml-utilities
@@ -54,6 +66,7 @@ APT_PACKAGES=(
     virtinst
     wget
     wingpanel-indicator-ayatana
+    wireshark
     xclip
     xsltproc
     xz-utils

@@ -11,6 +11,5 @@ install() {
     curl -o displaylink.zip -d"fileId=$FILE&accept_submit=Accept" "$URL"
     unzip displaylink.zip
     chmod +x ./displaylink-driver*.run
-    # TODO make this non-interactive
     sudo ./displaylink-driver*.run
 }

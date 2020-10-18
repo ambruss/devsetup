@@ -13,7 +13,8 @@ install() {
     chmod +x vbox.run
     sudo ./vbox.run
     curl -O "$VBOX_EXTPACK_URL"
+    tar -xf Oracle_VM_VirtualBox_Extension_Pack* ./ExtPack-license.txt
     sudo VBoxManage extpack install \
-        --accept-license=56be48f923303c8cababb0bb4c478284b688ed23f16d775d729b89a2e8e5f9eb \
+        --accept-license="$(sha256sum ExtPack-license.txt | cut -d" " -f1)" \
         --replace Oracle_VM_VirtualBox_Extension_Pack*
 }
