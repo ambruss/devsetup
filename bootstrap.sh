@@ -4,8 +4,15 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-command -v git >/dev/null 2>&1 || sudo apt-get install -qqy git
-mkdir -p ~/workspace
-cd ~/workspace || exit 1
-test -d devsetup || git clone https://github.com/ambruss/devsetup.git
-devsetup/devsetup.sh
+if ! command -v git >/dev/null 2>&1; then
+    echo "Installing git" 1>&2
+    sudo apt-get install -qqy git
+fi
+if ! test -d ~/workspace/devsetup; then
+    echo "Cloning ambruss/devsetup" 1>&2
+    mkdir -p ~/workspace
+    git clone https://github.com/ambruss/devsetup.git ~/workspace/devsetup
+fi
+
+echo "Running devsetup.sh" 1>&2
+workspace/devsetup/devsetup.sh
