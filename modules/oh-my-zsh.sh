@@ -12,7 +12,7 @@ install() {
     clone zsh-users/zsh-autosuggestions "$OHMYZSH_DIR/plugins/zsh-autosuggestions"
     clone zsh-users/zsh-syntax-highlighting "$OHMYZSH_DIR/plugins/zsh-syntax-highlighting"
     clone romkatv/powerlevel10k "$OHMYZSH_DIR/themes/powerlevel10k"
-    cd "$OHMYZSH_DIR" || fail "Couldn't cd into $OHMYZSH_DIR"
+    cdir "$OHMYZSH_DIR"
     GITCOMP_URL=https://raw.githubusercontent.com/git/git/master/contrib/completion
     curl -o git-completion.bash "$GITCOMP_URL/git-completion.bash"
     curl -o _git "$GITCOMP_URL/git-completion.zsh"

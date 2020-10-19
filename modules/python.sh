@@ -10,7 +10,7 @@ install() {
     PY_VER=$(python_ver)
     PY_URL=https://www.python.org/ftp/python/$PY_VER/Python-$PY_VER.tar.xz
     curl "$PY_URL" | tar xJ
-    cd "Python-$PY_VER" || fail "Couldn't cd into Python-$PY_VER"
+    cdir "Python-$PY_VER"
     ./configure \
         --prefix=/usr/local \
         --enable-optimizations \
@@ -19,7 +19,7 @@ install() {
         LDFLAGS="-Wl,-rpath /usr/local/lib"
     make -j8
     sudo make altinstall
-    sudo rm -rf "Python-$PY_VER"
+    sudo rm -rf "../Python-$PY_VER"
 }
 
 python_ver() {
