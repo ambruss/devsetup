@@ -5,6 +5,7 @@ is_installed() {
 }
 
 install() {
+    curl https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
     sudo apt-add-repository "deb https://download.sublimetext.com/ apt/dev/"
     sudo apt-get update -qq
     sudo apt-get install -qqy sublime-merge sublime-text
