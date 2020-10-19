@@ -13,8 +13,8 @@ install() {
         sudo apt-get update -qq
         sudo apt-get install -qqy software-properties-common
     fi
-    sudo apt-add-repository -y ppa:philip.scott/elementary-tweaks
-    sudo apt-add-repository -y ppa:yunnxx/elementary
+    sudo apt-add-repository -nsy ppa:philip.scott/elementary-tweaks
+    sudo apt-add-repository -nsy ppa:yunnxx/elementary
     sudo apt-get update -qq
     sudo apt-get install -qqy "${APT_PACKAGES[@]}"
     sudo sh -c "printf '[User]\nSystemAccount=true\n' > /var/lib/AccountsService/users/libvirt-qemu"
