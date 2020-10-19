@@ -28,9 +28,11 @@ APT_PACKAGES=(
     automake
     bridge-utils
     build-essential
+    cmake
     curl
     dkms
     dmg2img
+    docbook-xsl-ns
     dstat
     elementary-tweaks
     gfortran
@@ -55,9 +57,11 @@ APT_PACKAGES=(
     llvm
     nano
     ncdu
+    octave
     pkg-config
     qemu
     qemu-kvm
+    swig
     tmux
     tree
     uml-utilities

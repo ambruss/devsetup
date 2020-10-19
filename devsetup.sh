@@ -124,6 +124,7 @@ curl() { env curl -fLSs --retry 2 --connect-timeout 5 "$@"; }
 grep() { env grep -P "$@"; }
 sed() { env sed -E "$@"; }
 cmd() { quiet command -v "$1"; }
+cdir() { test -d "$1" || mkdir -p "$1"; cd "$1" || fail "Couldn't cd into $1"; }
 clone() { git clone --depth 1 "https://github.com/$1.git" "${@:2}"; }
 
 # logging helpers
