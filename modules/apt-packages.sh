@@ -22,6 +22,7 @@ install() {
     sudo sed -i "s/GNOME;\$/GNOME;Pantheon;/" /etc/xdg/autostart/indicator-application.desktop
     sudo systemctl restart accounts-daemon.service
 }
+
 APT_PACKAGES=(
     apt-transport-https
     autoconf

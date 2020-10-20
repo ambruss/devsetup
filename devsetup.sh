@@ -7,10 +7,12 @@ set -o pipefail
 VERSION_RE="v?[0-9]+(\.[0-9]+)+"
 DIR=$(cd "$(dirname "$0")" && pwd)
 mapfile -t MODULES < <(find "$DIR/modules" -type f -printf "%f\n" | sed 's|\.sh||' | sort)
+INSTALL=()
 DEPENDS=(
     "diff-so-fancy git-config"
     "kubectl minikube"
     "python venv"
+    "venv gdcm"
 )
 INCLUDE=()
 EXCLUDE=()
@@ -46,22 +48,11 @@ main() {
         MODULES=("${MODULES[@]/$MOD}")
     done
 
+    # add module dependencies
     if $NODEPS; then
         INSTALL=("${MODULES[@]}")
     else
-        info "Resolving dependencies"
-        INSTALL=()
-        for MOD in "${MODULES[@]}"; do
-            test -z "$MOD" || INSTALL+=("apt-packages $MOD")
-        done
-        for DEP in "${DEPENDS[@]}"; do
-            MOD1=${DEP/ */}
-            MOD2=${DEP/* /}
-            MOD1_=$(printf "%s\n" "${MODULES[@]}" | grep "$MOD1" || echo "$MOD1")
-            MOD2_=$(printf "%s\n" "${MODULES[@]}" | grep "$MOD2" || true)
-            test -z "$MOD2_" || INSTALL+=("$MOD1_ $MOD2_")
-        done
-        mapfile -t INSTALL < <(printf "%s\n" "${INSTALL[@]}" | tsort)
+        add_deps
     fi
     info "Gathered install modules ${INSTALL[*]}"
 
@@ -77,9 +68,10 @@ main() {
 
     # create and use tempdir (and clean up on exit)
     TMP=$(mktemp --directory --suffix .$$)
-    cd "$TMP"
-    trap 'rm -rf $TMP; kill 0' EXIT
-    # immediately enable running installed modules
+    cdir "$TMP"
+    trap 'info "Cleaning tempdir"; rm -rf $TMP; kill 0' EXIT
+
+    # pre-enable binaries by extending path
     export PATH=$VENV/bin:$NODE/bin:$GO/bin:$BIN:$PATH
     # install each module
     for MOD in "${INSTALL[@]}"; do
@@ -93,7 +85,7 @@ help() {
 cat <<EOF
 Usage: $0 [OPTION...]
 
-Automated development environment setup on Elementary OS.
+Automated development environment setup for Elementary OS.
 
 Examples:
   $0 --include python
@@ -138,6 +130,24 @@ warn() { log "[${C_WARN}WARNING${C_NULL}]" "$@"; }
 error() { log "[${C_ERROR}ERROR${C_NULL}]" "$@"; }
 fail() { error "$@"; exit "${EXIT_CODE:-1}"; }
 quiet() { "$@" >/dev/null 2>&1; }
+
+add_deps() {  # resolve and add dependency modules
+    info "Resolving dependencies"
+    for MOD in "${MODULES[@]}"; do
+        # add apt packages as a dependency for every module
+        test -z "$MOD" || INSTALL+=("apt-packages $MOD")
+    done
+    for DEP in "${DEPENDS[@]}"; do
+        # add dependencies (MOD1) defined in DEPENDS if MOD2 is to be installed
+        MOD1=${DEP/ */}
+        MOD2=${DEP/* /}
+        MOD1_=$(printf "%s\n" "${MODULES[@]}" | grep "$MOD1" || echo "$MOD1")
+        MOD2_=$(printf "%s\n" "${MODULES[@]}" | grep "$MOD2" || true)
+        test -z "$MOD2_" || INSTALL+=("$MOD1_ $MOD2_")
+    done
+    # run a topological sort on the 2-tuples to get a flat list
+    mapfile -t INSTALL < <(printf "%s\n" "${INSTALL[@]}" | tsort)
+}
 
 install() {(  # install item from ./modules
     MOD=${1/=*/}

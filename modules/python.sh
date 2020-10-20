@@ -12,9 +12,9 @@ install() {
     curl "$PY_URL" | tar xJ
     cdir "Python-$PY_VER"
     ./configure \
-        --prefix=/usr/local \
         --enable-optimizations \
         --enable-shared \
+        --prefix=/usr/local \
         --with-ensurepip=install \
         LDFLAGS="-Wl,-rpath /usr/local/lib"
     make -j8
