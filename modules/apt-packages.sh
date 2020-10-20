@@ -56,6 +56,7 @@ APT_PACKAGES=(
     libtool
     libvirt-bin
     llvm
+    meld
     nano
     ncdu
     octave
