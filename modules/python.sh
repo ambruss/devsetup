@@ -17,7 +17,7 @@ install() {
         --prefix=/usr/local \
         --with-ensurepip=install \
         LDFLAGS="-Wl,-rpath /usr/local/lib"
-    make -j8
+    make "-j$(nproc)"
     sudo make altinstall
     sudo rm -rf "../Python-$PY_VER"
 }
