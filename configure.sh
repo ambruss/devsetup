@@ -67,6 +67,7 @@ Usage: $0
 Automated configuration using the '.env' file.
 Currently supports:
 - Setting the global git email address and username
+- Creating a custom ipython startup script
 - Adding and configuring an existing SSH keypair
 - Entering a Sublime Text license key
 EOF
