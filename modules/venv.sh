@@ -20,7 +20,7 @@ install() {
 
 configure() {
     "$VENV/bin/ipython" profile create
-    sed_ipy() { sed -i "s|^#$1.*|$1 = $2|" ~/.ipython/profile_default/ipython_config.py; }
+    sed_ipy() { sed -i "s|^# ?$1.*|$1 = $2|" ~/.ipython/profile_default/ipython_config.py; }
     sed_ipy c.InteractiveShellApp.extensions "['autoreload']"
     sed_ipy c.InteractiveShellApp.exec_lines "['%autoreload 2']"
     sed_ipy c.TerminalIPythonApp.display_banner False
