@@ -15,4 +15,4 @@ if ! test -d ~/workspace/devsetup; then
 fi
 
 echo "Running devsetup.sh" 1>&2
-workspace/devsetup/devsetup.sh
+~/workspace/devsetup/devsetup.sh

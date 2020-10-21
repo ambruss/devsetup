@@ -17,7 +17,6 @@ install() {
     configure
 }
 
-
 configure() {
 cat <<EOF >"$SUBL_SETTINGS/Preferences.sublime-settings"
 {

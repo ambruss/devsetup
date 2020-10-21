@@ -28,9 +28,6 @@ configure() {
     sed_ipy c.TerminalInteractiveShell.editor "'nano'"
     sed_ipy c.TerminalInteractiveShell.term_title_format "'ipy {cwd}'"
     sed_ipy c.Completer.greedy True
-    cat >~/.ipython/profile_default/startup/startup.py <<EOF
-import requests
-EOF
 }
 
 VENV_PACKAGES=(

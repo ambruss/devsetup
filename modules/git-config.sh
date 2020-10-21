@@ -5,16 +5,6 @@ is_installed() {
 }
 
 install() {
-    test -n "$(gitconf --get user.name)" || (
-        read -rp "git user: " GIT_USER
-        gitconf user.name "$GIT_USER"
-    )
-
-    test -n "$(gitconf --get user.email)" || (
-        read -rp "git email: " GIT_EMAIL
-        gitconf user.email "$GIT_EMAIL"
-    )
-
     gitconf alias.lg    "log --abbrev-commit --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'"
     gitconf alias.diff  "diff --no-color --no-pager"
     gitconf alias.undo  "reset HEAD~1 --mixed"
