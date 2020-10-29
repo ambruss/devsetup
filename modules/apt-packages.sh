@@ -24,6 +24,7 @@ install() {
 }
 
 APT_PACKAGES=(
+    apt-file
     apt-transport-https
     autoconf
     automake

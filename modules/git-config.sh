@@ -5,6 +5,8 @@ is_installed() {
 }
 
 install() {
+    gitconf help.autocorrect 1
+
     gitconf alias.lg    "log --abbrev-commit --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'"
     gitconf alias.diff  "diff --no-color --no-pager"
     gitconf alias.undo  "reset HEAD~1 --mixed"
