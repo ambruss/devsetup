@@ -47,6 +47,7 @@ VENV_PACKAGES=(
     "flake8-bugbear"
     "fuzzywuzzy[speedup]"
     "httpie"
+    "icdiff"
     "invoke"
     "ipython"
     "isort"

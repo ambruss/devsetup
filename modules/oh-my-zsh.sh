@@ -37,7 +37,7 @@ autoload run-help
 
 export CLOUDSDK_PYTHON=/usr/bin/python3.6
 export DOCKER_BUILDKIT=1
-export EDITOR=nano
+export EDITOR=micro
 export HELPDIR=/usr/share/zsh/functions/Misc
 export MINIKUBE_IN_STYLE=false
 export NPM_CONFIG_PREFIX=$NODE
