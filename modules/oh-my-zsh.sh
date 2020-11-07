@@ -22,7 +22,10 @@ install() {
     sed_zshrc HIST_STAMPS yyyy-mm-dd
     sed_zshrc plugins "(extract httpie z zsh-autosuggestions zsh-syntax-highlighting)"
     echo '[ -f ~/.p10k.zsh ] && source ~/.p10k.zsh' >>~/.zshrc
-    profile | sed "s|_PATH_|$VENV/bin:$NODE/bin:$BIN:\$PATH|" >"$OHMYZSH_DIR/profile.zsh"
+    profile \
+        | sed "s|_NODE_|$NODE|" \
+        | sed "s|_PATH_|$BIN:$VENV/bin:$NODE/bin|" \
+        >"$OHMYZSH_DIR/profile.zsh"
     p10k >~/.p10k.zsh
     touch ~/.z
     test -d "$SHARE/fzf" || clone junegunn/fzf "$SHARE/fzf"
@@ -40,9 +43,10 @@ export DOCKER_BUILDKIT=1
 export EDITOR=micro
 export HELPDIR=/usr/share/zsh/functions/Misc
 export MINIKUBE_IN_STYLE=false
-export NPM_CONFIG_PREFIX=$NODE
+export NODE_PATH=_NODE_/lib/node_modules
+export NPM_CONFIG_PREFIX=_NODE_
 export PAGER="less -RF"  # TODO mouse scroll
-export PATH=_PATH_
+export PATH=_PATH_:$PATH
 export PIPENV_HIDE_EMOJIS=1
 export PIPENV_IGNORE_VIRTUALENVS=1
 export REPORTMEMORY=10240

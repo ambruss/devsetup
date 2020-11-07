@@ -11,6 +11,8 @@ INSTALL=()
 DEPENDS=(
     "diff-so-fancy git-config"
     "kubectl minikube"
+    "nodejs npm"
+    "npm wps"
     "python venv"
     "venv gdcm"
 )
@@ -72,7 +74,7 @@ main() {
     trap 'info "Cleaning tempdir"; rm -rf $TMP; kill 0' EXIT
 
     # pre-enable binaries by extending path
-    export PATH=$VENV/bin:$NODE/bin:$GO/bin:$BIN:$PATH
+    export PATH=$BIN:$VENV/bin:$NODE/bin:$GO/bin:$PATH
     # install each module
     for MOD in "${INSTALL[@]}"; do
         install "$MOD"

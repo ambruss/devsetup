@@ -2,7 +2,7 @@
 
 is_installed() {
     test -d "$VENV" || return 1
-    "$VENV/bin/pip" freeze | sed -E 's|([^=]+)=.*|\1|' >pip.list || return 1
+    "$VENV/bin/pip" freeze | sed 's|([^=]+)=.*|\1|' >pip.list || return 1
     for PACKAGE in "${VENV_PACKAGES[@]}"; do
         grep -q "^$PACKAGE\$" pip.list || return 1
     done
@@ -70,7 +70,6 @@ VENV_PACKAGES=(
     "pylint"
     "pynetdicom"
     "pynvim"
-    "pyppeteer"
     "pyqt5"
     "pytest"
     "pytest-cov"
