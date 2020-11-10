@@ -8,7 +8,7 @@ install() {
     curl https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
     sudo apt-add-repository "deb https://download.sublimetext.com/ apt/dev/"
     sudo apt-get update -qq
-    sudo apt-get install -qqy sublime-merge sublime-text
+    sudo apt-get install -qqy sublime-text
     SUBL_INSTALLS="$CONFIG/sublime-text-3/Installed Packages"
     SUBL_SETTINGS="$CONFIG/sublime-text-3/Packages/User"
     mkdir -p "$SUBL_INSTALLS" "$SUBL_SETTINGS"

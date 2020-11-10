@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-test -n "${TRACE:-}" && set -o xtrace
-set -o errexit
-set -o nounset
-set -o pipefail
+set -euo pipefail
+test -z "${TRACE:-}" || set -x
 
 VERSION_RE="v?[0-9]+(\.[0-9]+)+"
 DIR=$(cd "$(dirname "$0")" && pwd)
@@ -20,6 +18,7 @@ INCLUDE=()
 EXCLUDE=()
 FORCE=false
 NODEPS=false
+DOTENV=
 DRYRUN=false
 SUDO=false
 
@@ -33,6 +32,7 @@ main() {
         -x|--exclude)   EXCLUDE+=("$2"); shift;;
         -f|--force)     FORCE=true;;
         -D|--no-deps)   NODEPS=true;;
+        --dotenv)       DOTENV=$2; shift;;
         --dry-run)      DRYRUN=true;;
         *)              fail "Invalid argument: $1 (run $0 help for usage)";;
     esac && shift
@@ -73,12 +73,21 @@ main() {
     cdir "$TMP"
     trap 'info "Cleaning tempdir"; rm -rf $TMP; kill 0' EXIT
 
-    # pre-enable binaries by extending path
+    # pre-enable binaries by extending path and setting node vars
     export PATH=$BIN:$VENV/bin:$NODE/bin:$GO/bin:$PATH
-    # install each module
+    export NODE_PATH="$NODE/lib/node_modules"
+    export NPM_CONFIG_PREFIX=$NODE
+
+    # install selected modules
     for MOD in "${INSTALL[@]}"; do
         install "$MOD"
     done
+
+    if [ -n "$DOTENV" ]; then
+        # shellcheck disable=SC2015
+        info "Loading dotenv$($DRYRUN && echo ' (dry-run)' || true)"
+        $DRYRUN || load_dotenv
+    fi
 
     info "Devsetup complete"
 }
@@ -101,6 +110,7 @@ Options:
   -x, --exclude MOD         Skip installing explicitly blacklisted modules
   -f, --force               Force reinstalls even if already present
   -D, --no-deps             Skip installing dependencies
+      --dotenv FILE         Configure user-specific settings
       --dry-run             Only print what would be installed
 
 EOF
@@ -165,6 +175,53 @@ install() {(  # install item from ./modules
         info "Skipping $MOD (already installed)"
     fi
 )}
+
+load_dotenv() {  # load config from dotenv file
+    if ! test -f "$DOTENV"; then
+        info "$DOTENV not found - creating"
+        sleep 2
+        cp "$DIR/.env.sample" "$DOTENV"
+        "${EDITOR:-nano}" "$DOTENV"
+    fi
+
+    info "Sourcing $DOTENV"
+    # shellcheck disable=SC1090
+    . "$DOTENV"
+
+    if [ -n "${GIT_EMAIL:-}" ] && [ -n "${GIT_NAME:-}" ]; then
+        info "Setting git email and username"
+        git config --global user.email "$GIT_EMAIL"
+        git config --global user.name "$GIT_NAME"
+    fi
+    if [ -n "${IPY_STARTUP:-}" ]; then
+        info "Writing ipython startup script"
+        IPY_FILE=~/.ipython/profile_default/startup/startup.py
+        mkdir -p "$(dirname "$IPY_FILE")"
+        echo "$IPY_STARTUP" >"$IPY_FILE"
+    fi
+    if [ -n "${SSH_KEY:-}" ] && [ -n "${SSH_PUB:-}" ]; then
+        info "Setting up SSH keypair"
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        echo "$SSH_KEY" >~/.ssh/id_rsa
+        echo "$SSH_PUB" >~/.ssh/id_rsa.pub
+        chmod 600 ~/.ssh/id_rsa
+        eval "$(ssh-agent)"
+        ssh-add ~/.ssh/id_rsa
+    fi
+    if [ -n "${SUBLIME_KEY:-}" ]; then
+        info "Writing sublime license file"
+        LICENSE_FILE=~/.config/sublime-text-3/Local/License.sublime_license
+        mkdir -p "$(dirname "$LICENSE_FILE")"
+        echo "$SUBLIME_KEY" >"$LICENSE_FILE"
+    fi
+    if [ -n "${ZSH_PROFILE:-}" ]; then
+        info "Writing zsh profile"
+        ZSH_FILE=~/.oh-my-zsh/custom/custom.zsh
+        mkdir -p "$(dirname "$ZSH_FILE")"
+        echo "$ZSH_PROFILE" >"$ZSH_FILE"
+    fi
+}
 
 latest() {  # get latest version string from a release page
     test -z "${VERSION:-}" || { echo "$VERSION" && return; }

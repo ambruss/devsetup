@@ -9,12 +9,12 @@ install() {
     curl -O "$URL"
     sudo dpkg --install wps-office*.deb || sudo apt-get install -fqqy
     clone iamdh4/ttf-wps-fonts
-    cd ttf-wps-fonts
+    cdir ttf-wps-fonts
     sudo ./install.sh
 }
 
 get_wps_url() {
-NODE_PATH="$NODE/lib/node_modules" node <<'EOF'
+node <<'EOF'
 const puppeteer = require('puppeteer');
 
 (async () => {

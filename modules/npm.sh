@@ -1,18 +1,15 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    export NPM_CONFIG_PREFIX=$NODE
-    npm ls --global --depth=0 --parseable=true 2>/dev/null\
+    OLD=$(npm ls --global --depth=0 --parseable=true 2>/dev/null \
         | grep "node_modules/" \
-        | sed 's|.*node_modules/(.*)|\1|' >npm.list \
-        || return 1
-    for PACKAGE in "${NPM_PACKAGES[@]}"; do
-        grep -q "^$PACKAGE\$" npm.list || return 1
-    done
+        | sed 's|.*node_modules/(.*)|\1|' \
+        | sort)
+    NEW=$(comm -23 <(printf "%s\n" "${NPM_PACKAGES[@]}" | sort) <(echo "$OLD"))
+    test -z "$NEW" || return 1
 }
 
 install() {
-    export NPM_CONFIG_PREFIX=$NODE
     for PACKAGE in "${NPM_PACKAGES[@]}"; do
         npm install --global "$PACKAGE"
     done

@@ -2,11 +2,9 @@
 
 is_installed() {
     test -d "$VENV" || return 1
-    "$VENV/bin/pip" freeze | sed 's|([^=]+)=.*|\1|' >pip.list || return 1
-    for PACKAGE in "${VENV_PACKAGES[@]}"; do
-        grep -q "^$PACKAGE\$" pip.list || return 1
-    done
-    return 0
+    OLD=$("$VENV/bin/pip" freeze | sed 's|([^=]+)=.*|\1|' | tr '[:upper:]' '[:lower:]' | sort)
+    NEW=$(comm -23 <(printf "%s\n" "${VENV_PACKAGES[@]}" | sed 's|\[.*||' | sort) <(echo "$OLD"))
+    test -z "$NEW" || return 1
 }
 
 install() {

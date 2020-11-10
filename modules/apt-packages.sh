@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    apt list --installed 2>/dev/null | sed 's|([^/]+)/.*|\1|' >apt.list
-    for PACKAGE in "${APT_PACKAGES[@]}"; do
-        grep -q "^$PACKAGE\$" apt.list || return 1
-    done
-    return 0
+    OLD=$(apt list --installed 2>/dev/null | sed 's|([^/]+)/.*|\1|' | sort)
+    NEW=$(comm -23 <(printf "%s\n" "${APT_PACKAGES[@]}" | sort) <(echo "$OLD"))
+    test -z "$NEW" || return 1
 }
 
 install() {
@@ -52,6 +50,7 @@ APT_PACKAGES=(
     libncurses5-dev
     libncursesw5-dev
     libreadline-dev
+    librsvg2-bin
     libsqlite3-dev
     libssl-dev
     libtool
@@ -65,8 +64,10 @@ APT_PACKAGES=(
     qemu
     qemu-kvm
     swig
+    texlive-xetex
     tmux
     tree
+    ttf-dejavu-extra
     uml-utilities
     virt-manager
     virt-top
