@@ -197,13 +197,22 @@ load_dotenv() {  # load config from dotenv file
         info "Writing ipython startup script"
         IPY_FILE=~/.ipython/profile_default/startup/startup.py
         mkdir -p "$(dirname "$IPY_FILE")"
-        echo "$IPY_STARTUP" >"$IPY_FILE"
+        echo "${IPY_STARTUP:1}" >"$IPY_FILE"
+    fi
+    if [ -n "${JIRA_CONFIG:-}" ]; then
+        info "Writing JIRA CLI config"
+        JIRA_FILE=~/.jira.d/config.yml
+        mkdir -p "$(dirname "$JIRA_FILE")"
+        echo "${JIRA_CONFIG:1}" >"$JIRA_FILE"
+        chmod +x "$JIRA_FILE"
+        info "Opening Chrome tab JIRA API-tokens"
+        google-chrome https://id.atlassian.com/manage/api-tokens
     fi
     if [ -n "${SSH_KEY:-}" ] && [ -n "${SSH_PUB:-}" ]; then
         info "Setting up SSH keypair"
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
-        echo "$SSH_KEY" >~/.ssh/id_rsa
+        echo "${SSH_KEY:1}" >~/.ssh/id_rsa
         echo "$SSH_PUB" >~/.ssh/id_rsa.pub
         chmod 600 ~/.ssh/id_rsa
         eval "$(ssh-agent)"
@@ -213,13 +222,13 @@ load_dotenv() {  # load config from dotenv file
         info "Writing sublime license file"
         LICENSE_FILE=~/.config/sublime-text-3/Local/License.sublime_license
         mkdir -p "$(dirname "$LICENSE_FILE")"
-        echo "$SUBLIME_KEY" >"$LICENSE_FILE"
+        echo "${SUBLIME_KEY:1}" >"$LICENSE_FILE"
     fi
     if [ -n "${ZSH_PROFILE:-}" ]; then
         info "Writing zsh profile"
         ZSH_FILE=~/.oh-my-zsh/custom/custom.zsh
         mkdir -p "$(dirname "$ZSH_FILE")"
-        echo "$ZSH_PROFILE" >"$ZSH_FILE"
+        echo "${ZSH_PROFILE:1}" >"$ZSH_FILE"
     fi
 }
 
