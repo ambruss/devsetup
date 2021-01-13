@@ -31,7 +31,8 @@ INSTALL=(
     nanorc
     oh-my-zsh
     rg
-    # some-venv
+    server-config
+    venv
 )
 
 

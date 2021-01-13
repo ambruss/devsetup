@@ -38,7 +38,7 @@ DEPENDS=(
     "venv gdcm"
 )
 INCLUDE=()
-EXCLUDE=()
+EXCLUDE=(server-config)
 NODEPS=false
 
 

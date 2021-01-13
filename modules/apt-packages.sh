@@ -35,6 +35,7 @@ APT_PACKAGES=(
     autoconf
     automake
     build-essential
+    cifs-utils
     cmake
     curl
     dstat
@@ -97,6 +98,14 @@ APT_PACKAGES_DEV=(
     zlib1g-dev
 )
 
+# additional apt packages for the server setup
+APT_PACKAGES_SERVER=(
+    openssh-server
+    python3
+)
+
 if "$SETUP" = dev; then
     APT_PACKAGES+=("${APT_PACKAGES_DEV[@]}")
+else
+    APT_PACKAGES+=("${APT_PACKAGES_SERVER[@]}")
 fi
