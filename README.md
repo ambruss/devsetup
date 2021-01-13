@@ -1,11 +1,11 @@
 # devsetup
 
-Automated development environment setup for Elementary OS.
+Automated development environment and home server bootstrapping.
 
 ## Installation
 
 ```bash
-curl https://raw.githubusercontent.com/ambruss/devsetup/master/bootstrap.sh | bash
+curl https://raw.githubusercontent.com/ambruss/bootstrap/master/bootstrap.sh | bash
 ```
 
 ## Development
