@@ -9,7 +9,7 @@ repos:
       - id: shell-lint
         name: shell-lint
         language: system
-        entry: shellcheck
+        entry: shellcheck -e SC2034
         types: [shell]
       - id: yaml-lint
         name: yaml-lint

@@ -6,11 +6,13 @@ if ! command -v git >/dev/null 2>&1; then
     echo "Installing git" >&2
     sudo apt-get install -qqy git
 fi
-if ! test -d ~/workspace/devsetup; then
-    echo "Cloning ambruss/devsetup" >&2
+if ! test -d ~/workspace/bootstrap; then
+    echo "Cloning ambruss/bootstrap" >&2
     mkdir -p ~/workspace
-    git clone https://github.com/ambruss/devsetup ~/workspace/devsetup
+    git clone https://github.com/ambruss/bootstrap ~/workspace/bootstrap
 fi
 
-echo "Running devsetup.sh" >&2
-~/workspace/devsetup/devsetup.sh "$@"
+lsb_release -sd | grep -q elementary && SETUP=dev || SETUP=server
+SCRIPT="setup-$SETUP.sh"
+echo "Running $SCRIPT" >&2
+~/workspace/bootstrap/"$SCRIPT" "$@"

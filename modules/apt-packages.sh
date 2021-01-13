@@ -6,7 +6,9 @@ is_installed() {
     test -z "$NEW" || return 1
 }
 
-install() {
+install() { "install_$SETUP"; }
+
+install_dev() {
     if ! cmd apt-add-repository; then
         sudo apt-get update -qq
         sudo apt-get install -qqy software-properties-common
@@ -15,30 +17,49 @@ install() {
     sudo apt-add-repository -nsy ppa:yunnxx/elementary
     sudo apt-get update -qq
     sudo apt-get install -qqy "${APT_PACKAGES[@]}"
-    sudo sh -c "printf '[User]\nSystemAccount=true\n' > /var/lib/AccountsService/users/libvirt-qemu"
+    sudo sh -c "printf '[User]\nSystemAccount=true\n' >/var/lib/AccountsService/users/libvirt-qemu"
     sudo rm -f /etc/xdg/autostart/nm-applet.desktop
     sudo sed -i "s/GNOME;\$/GNOME;Pantheon;/" /etc/xdg/autostart/indicator-application.desktop
     sudo systemctl restart accounts-daemon.service
 }
 
+install_server() {
+    sudo apt-get update -qq
+    sudo apt-get install -qqy "${APT_PACKAGES[@]}"
+}
+
+# common apt packages for all setups
 APT_PACKAGES=(
     apt-file
     apt-transport-https
     autoconf
     automake
-    bridge-utils
     build-essential
     cmake
     curl
+    dstat
+    git
+    htop
+    nano
+    ncdu
+    pkg-config
+    sdiff
+    software-properties-common
+    tmux
+    tree
+    wget
+    zsh
+)
+
+# additional apt packages for the dev setup
+APT_PACKAGES_DEV=(
+    bridge-utils
     dkms
     dmg2img
     docbook-xsl-ns
-    dstat
     elementary-tweaks
     gfortran
     gimp
-    git
-    htop
     indicator-application
     kazam
     libblas-dev
@@ -57,27 +78,25 @@ APT_PACKAGES=(
     libvirt-bin
     llvm
     meld
-    nano
-    ncdu
     octave
-    pkg-config
     qemu
     qemu-kvm
     swig
     texlive-xetex
-    tmux
-    tree
     ttf-dejavu-extra
     uml-utilities
     virt-manager
     virt-top
     virtinst
-    wget
     wingpanel-indicator-ayatana
     wireshark
     xclip
+    xsel
     xsltproc
     xz-utils
     zlib1g-dev
-    zsh
 )
+
+if "$SETUP" = dev; then
+    APT_PACKAGES+=("${APT_PACKAGES_DEV[@]}")
+fi
