@@ -6,8 +6,7 @@ test -z "${TRACE:-}" || set -x
 . "$(dirname "$0")/common.sh"
 
 SETUP=dev
-USAGE="
-Usage: $0 [OPTION...]
+USAGE="Usage: $0 [OPTION...]
 
 Automated development environment setup on Elementary OS 5.1.
 

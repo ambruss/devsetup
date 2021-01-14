@@ -6,8 +6,7 @@ test -z "${TRACE:-}" || set -x
 . "$(dirname "$0")/common.sh"
 
 SETUP=server
-USAGE="
-Usage: $0 [OPTION...]
+USAGE="Usage: $0 [OPTION...]
 
 Automated home server setup on Ubuntu Server 20.04.
 
