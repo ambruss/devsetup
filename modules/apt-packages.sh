@@ -15,8 +15,7 @@ install_dev() {
     fi
     sudo apt-add-repository -nsy ppa:philip.scott/elementary-tweaks
     sudo apt-add-repository -nsy ppa:yunnxx/elementary
-    sudo apt-get update -qq
-    sudo apt-get install -qqy "${APT_PACKAGES[@]}"
+    install_server
     sudo sh -c "printf '[User]\nSystemAccount=true\n' >/var/lib/AccountsService/users/libvirt-qemu"
     sudo rm -f /etc/xdg/autostart/nm-applet.desktop
     sudo sed -i "s/GNOME;\$/GNOME;Pantheon;/" /etc/xdg/autostart/indicator-application.desktop
@@ -25,7 +24,9 @@ install_dev() {
 
 install_server() {
     sudo apt-get update -qq
+    sudo apt-get upgrade -qqy
     sudo apt-get install -qqy "${APT_PACKAGES[@]}"
+    sudo apt-get autoremove -qqy
 }
 
 # common apt packages for all setups
