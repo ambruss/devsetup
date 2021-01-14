@@ -31,7 +31,7 @@ install() {
 }
 
 profile() {
-    if "$SETUP" = dev; then
+    if [ "$SETUP" = dev ]; then
         profile_common | sed "s|\{\{PATH\}\}|$BIN:$VENV/bin:$NODE/bin:$HOME/google-cloud-sdk/bin|"
         profile_dev | sed "s|\{\{NODE\}\}|$NODE|"
     else

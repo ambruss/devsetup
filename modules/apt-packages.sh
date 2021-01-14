@@ -44,7 +44,6 @@ APT_PACKAGES=(
     nano
     ncdu
     pkg-config
-    sdiff
     software-properties-common
     tmux
     tree
@@ -104,7 +103,7 @@ APT_PACKAGES_SERVER=(
     python3
 )
 
-if "$SETUP" = dev; then
+if [ "$SETUP" = dev ]; then
     APT_PACKAGES+=("${APT_PACKAGES_DEV[@]}")
 else
     APT_PACKAGES+=("${APT_PACKAGES_SERVER[@]}")

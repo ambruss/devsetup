@@ -42,11 +42,11 @@ Options:
 
 ## Testing
 
+The test dependencies (including `pre-commit`) are installed via `setup-dev.sh`.
+
 ```bash
 pre-commit run -a
 ```
-
-The tools used within the hooks are installed via `setup-dev.sh`.
 
 ## License
 

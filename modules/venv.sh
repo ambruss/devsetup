@@ -96,6 +96,6 @@ VENV_PACKAGES_DEV=(
     "yappi"
 )
 
-if "$SETUP" = dev; then
+if [ "$SETUP" = dev ]; then
     VENV_PACKAGES+=("${VENV_PACKAGES_DEV[@]}")
 fi
