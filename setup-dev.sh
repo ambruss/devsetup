@@ -28,6 +28,7 @@ Options:
 "
 
 mapfile -t MODULES < <(find "$DIR/modules" -type f -printf "%f\n" | sed 's|\.sh||' | sort)
+MODULES=("${MODULES[@]/server-config}")
 INSTALL=()
 DEPENDS=(
     "diff-so-fancy git-config"
@@ -37,7 +38,7 @@ DEPENDS=(
     "venv gdcm"
 )
 INCLUDE=()
-EXCLUDE=(server-config)
+EXCLUDE=()
 NODEPS=false
 
 

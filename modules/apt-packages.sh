@@ -41,6 +41,7 @@ APT_PACKAGES=(
     dstat
     git
     htop
+    libssl-dev
     nano
     ncdu
     pkg-config
@@ -48,6 +49,7 @@ APT_PACKAGES=(
     tmux
     tree
     wget
+    zip
     zsh
 )
 
@@ -73,7 +75,6 @@ APT_PACKAGES_DEV=(
     libreadline-dev
     librsvg2-bin
     libsqlite3-dev
-    libssl-dev
     libtool
     libvirt-bin
     llvm

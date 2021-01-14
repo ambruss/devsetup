@@ -11,12 +11,16 @@ USAGE="Usage: $0 [OPTION...]
 Automated home server setup on Ubuntu Server 20.04.
 
 Options:
+  -l, --list                List available modules
+  -i, --include MOD[=VER]   Only install explicitly whitelisted modules
+                            Optionally define module version to install
+  -x, --exclude MOD         Skip installing explicitly blacklisted modules
   -f, --force               Force reinstalls even if module is already present
       --dry-run             Only print what would be installed
       --dotenv              Autocreate .env file for customizing user settings
 "
 
-INSTALL=(
+MODULES=(
     apt-packages
     bat
     diff-so-fancy
@@ -33,12 +37,18 @@ INSTALL=(
     server-config
     venv
 )
+INSTALL=()
+INCLUDE=()
+EXCLUDE=()
 
 
 main() {
     while test $# -gt 0; do
     case $1 in
         -h|--help|help) echo "$USAGE" && exit;;
+        -l|--list|list) list && exit;;
+        -i|--include)   INCLUDE+=("$2"); shift;;
+        -x|--exclude)   EXCLUDE+=("$2"); shift;;
         -f|--force)     FORCE=true;;
         --dry-run)      DRYRUN=true;;
         --dotenv)       DOTENV=true;;
@@ -46,11 +56,24 @@ main() {
     esac && shift
     done
 
+    # validate modules
+    for MOD in "${INCLUDE[@]}" "${EXCLUDE[@]}"; do
+        NAME=${MOD/=*/}  # strip any version override
+        echo " ${MODULES[*]} " | grep -q " $NAME " || fail "Invalid module $NAME"
+    done
+
+    # apply in/exclusions
+    test -z "${INCLUDE[*]}" || MODULES=("${INCLUDE[@]}")
+    test -z "${EXCLUDE[*]}" || for MOD in "${EXCLUDE[@]}"; do
+        MODULES=("${MODULES[@]/$MOD}")
+    done
+
     # define and create dirs
     CONFIG=$HOME/.config
     LOCAL=$HOME/local
     BIN=$LOCAL/bin
     SHARE=$LOCAL/share
+    VENV=$LOCAL/venv
     mkdir -p "$BIN" "$CONFIG" "$SHARE"
 
     # create and use tempdir (and clean up on exit)
@@ -69,6 +92,13 @@ main() {
     load_dotenv
 
     info "$0 finished"
+}
+
+list() {
+    echo "Available modules:"
+    for MOD in "${MODULES[@]}"; do
+        echo "  - $MOD"
+    done
 }
 
 
