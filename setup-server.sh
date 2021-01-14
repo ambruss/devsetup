@@ -68,6 +68,9 @@ main() {
         MODULES=("${MODULES[@]/$MOD}")
     done
 
+    INSTALL=("${MODULES[@]}")
+    info "Gathered install modules ${INSTALL[*]}"
+
     # define and create dirs
     CONFIG=$HOME/.config
     LOCAL=$HOME/local
