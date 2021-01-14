@@ -11,7 +11,7 @@ install() {
     auto_login
 }
 
-remove_snap() {
+remove_snapd() {
     cmd snap || return
     info "Removing snapd"
     sudo snap remove --purge lxd
