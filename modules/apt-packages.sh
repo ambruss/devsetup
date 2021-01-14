@@ -102,6 +102,7 @@ APT_PACKAGES_DEV=(
 APT_PACKAGES_SERVER=(
     openssh-server
     python3
+    python3-venv
 )
 
 if [ "$SETUP" = dev ]; then
