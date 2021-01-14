@@ -38,7 +38,7 @@ auto_login() {
     test ! -f "$CONF" || $FORCE || return 0
     info "Enabling auto-login"
     sudo mkdir -p "$(dirname "$CONF")"
-    cat >"$CONF" <<EOF
+    sudo tee "$CONF" >/dev/null <<EOF
 [Service]
 ExecStart=
 ExecStart=-/sbin/agetty --noissue --autologin $USER %I $TERM
