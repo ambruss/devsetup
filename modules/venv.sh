@@ -9,7 +9,11 @@ is_installed() {
 
 install() {
     ! $FORCE || rm -rf "$VENV"
-    PY_BIN=$(find /usr/local/bin -name 'python*' | grep -v config | sort | tail -n1)
+    if [ "$SETUP" = dev ]; then
+        PY_BIN=$(find /usr/local/bin -name 'python*' | grep -v config | sort | tail -n1)
+    else
+        PY_BIN=$(command -v python3)
+    fi
     test -d "$VENV" || "$PY_BIN" -m venv "$VENV"
     "$VENV/bin/pip" install -U pip setuptools wheel
     "$VENV/bin/pip" install -U "${VENV_PACKAGES[@]}"
