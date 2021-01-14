@@ -12,7 +12,7 @@ install() {
 }
 
 remove_snapd() {
-    cmd snap || return
+    cmd snap || return 0
     info "Removing snapd"
     sudo snap remove --purge lxd
     sudo snap remove --purge core18
@@ -21,7 +21,7 @@ remove_snapd() {
 }
 
 remove_cloudinit() {
-    cmd cloud-init || return
+    cmd cloud-init || return 0
     info "Removing cloud-init"
     sudo apt-get purge -y cloud-init
 }
@@ -35,7 +35,7 @@ patch_motd() {
 
 auto_login() {
     CONF=/etc/systemd/system/getty@tty1.service.d/override.conf
-    test ! -f "$CONF" || return
+    test ! -f "$CONF" || $FORCE || return 0
     info "Enabling auto-login"
     sudo mkdir -p "$(dirname "$CONF")"
     cat >"$CONF" <<EOF
