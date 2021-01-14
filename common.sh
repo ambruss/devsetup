@@ -31,7 +31,7 @@ quiet() { "$@" >/dev/null 2>&1; }
 
 # load config from dotenv file
 load_dotenv() {(
-    $DOTENV || test -f .env || return
+    $DOTENV || test -f .env || return 0
     DOTENV="$DIR/.env"
     info "Loading $DOTENV"
     # shellcheck disable=SC2015
