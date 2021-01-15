@@ -35,6 +35,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 EOF
 sed_zshrc() { sed -i "s|^(# )?$1=.*\$|$1=$2|"; }
+# shellcheck disable=SC2002
 cat ~/.zshrc \
     | sed_zshrc ZSH_THEME powerlevel10k/powerlevel10k \
     | sed_zshrc DISABLE_UPDATE_PROMPT true \

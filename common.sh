@@ -122,3 +122,17 @@ sudo() {  # maintain sudo after 1st prompt
     fi
     command sudo "$@"
 }
+
+on_start() {  # create and use tempdir and register exit hook
+    TMP=$(mktemp --directory --suffix .$$)
+    cdir "$TMP"
+    trap on_exit EXIT
+}
+
+on_exit() {  # clean up tempdir and log final status
+    CODE=$?
+    rm -rf "$TMP"
+    kill 0
+    test "$CODE" = 0 || fail "Command returned $CODE\nRun with TRACE=1 to debug"
+    info "$0 finished without errors"
+}

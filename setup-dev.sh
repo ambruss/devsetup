@@ -43,6 +43,8 @@ NODEPS=false
 
 
 main() {
+    on_start
+
     while test $# -gt 0; do
     case $1 in
         -h|--help|help) echo "$USAGE" && exit;;
@@ -87,11 +89,6 @@ main() {
     GO=$LOCAL/go
     mkdir -p "$BIN" "$CONFIG" "$SHARE"
 
-    # create and use tempdir (and clean up on exit)
-    TMP=$(mktemp --directory --suffix .$$)
-    cdir "$TMP"
-    trap 'info "Cleaning tempdir"; rm -rf $TMP; kill 0' EXIT
-
     # pre-enable binaries by extending path and setting node vars
     export PATH=$BIN:$VENV/bin:$NODE/bin:$GO/bin:$PATH
     export NODE_PATH="$NODE/lib/node_modules"
@@ -103,8 +100,6 @@ main() {
     done
 
     load_dotenv
-
-    info "$0 finished"
 }
 
 list() {
