@@ -115,7 +115,7 @@ APT_PACKAGES_DEV=(
 # additional apt packages for the server setup
 APT_PACKAGES_SERVER=(
     openssh-server
-    python3
+    python3-dev
     python3-venv
 )
 
