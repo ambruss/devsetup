@@ -16,29 +16,34 @@ install() {
     GITCOMP_URL=https://raw.githubusercontent.com/git/git/master/contrib/completion
     curl -o git-completion.bash "$GITCOMP_URL/git-completion.bash"
     curl -o _git "$GITCOMP_URL/git-completion.zsh"
-    sed_zshrc() { sed -i "s|^(# )?$1=.*\$|$1=$2|" ~/.zshrc; }
-    sed_zshrc ZSH_THEME powerlevel10k/powerlevel10k
-    sed_zshrc DISABLE_UPDATE_PROMPT true
-    sed_zshrc HIST_STAMPS yyyy-mm-dd
-    sed_zshrc plugins "(extract httpie z zsh-autosuggestions zsh-syntax-highlighting)"
-    cat >~/.zshrc.new <<'EOF'
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
-EOF
-    cat ~/.zshrc >~/.zshrc.new
-    mv ~/.zshrc.new ~/.zshrc
-    echo '[ -f ~/.p10k.zsh ] && source ~/.p10k.zsh' >>~/.zshrc
+    zshrc >~/.zshrc.new && mv ~/.zshrc.new ~/.zshrc
     profile >"$OHMYZSH_DIR/profile.zsh"
     p10k >~/.p10k.zsh
     touch ~/.z
     test -d "$SHARE/fzf" || clone junegunn/fzf "$SHARE/fzf"
     "$SHARE/fzf/install" --all
     getent passwd "$(id -u)" | grep -q zsh || sudo chsh -s "$(command -v zsh)" "$USER"
+}
+
+zshrc() {
+cat <<'EOF'
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+EOF
+sed_zshrc() { sed -i "s|^(# )?$1=.*\$|$1=$2|"; }
+cat ~/.zshrc \
+    | sed_zshrc ZSH_THEME powerlevel10k/powerlevel10k \
+    | sed_zshrc DISABLE_UPDATE_PROMPT true \
+    | sed_zshrc HIST_STAMPS yyyy-mm-dd \
+    | sed_zshrc plugins "(extract httpie z zsh-autosuggestions zsh-syntax-highlighting)"
+cat <<'EOF'
+# Load Powerlevel10k
+[ -f ~/.p10k.zsh ] && source ~/.p10k.zsh
+EOF
 }
 
 profile() {
