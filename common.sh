@@ -132,7 +132,7 @@ on_start() {  # create and use tempdir and register exit hook
 on_exit() {  # clean up tempdir, log exit status and kill the sudo loop
     CODE=$?
     if [ "$CODE" = 0 ]; then
-        info "$0 finished without errors"
+        info "$(basename $0) finished without errors"
     else
         error "Command returned $CODE\nRun with TRACE=1 to debug"
     fi

@@ -33,8 +33,9 @@ cat <<'EOF'
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
+
 EOF
-sed_zshrc() { sed -i "s|^(# )?$1=.*\$|$1=$2|"; }
+sed_zshrc() { sed "s|^(# )?$1=.*\$|$1=$2|"; }
 # shellcheck disable=SC2002
 cat ~/.zshrc \
     | sed_zshrc ZSH_THEME powerlevel10k/powerlevel10k \
@@ -42,7 +43,7 @@ cat ~/.zshrc \
     | sed_zshrc HIST_STAMPS yyyy-mm-dd \
     | sed_zshrc plugins "(extract httpie z zsh-autosuggestions zsh-syntax-highlighting)"
 cat <<'EOF'
-# Load Powerlevel10k
+
 [ -f ~/.p10k.zsh ] && source ~/.p10k.zsh
 EOF
 }
