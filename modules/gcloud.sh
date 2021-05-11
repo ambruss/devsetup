@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    cmd gcloud
+    test -x ~/google-cloud-sdk/bin/gcloud
 }
 
 install() {

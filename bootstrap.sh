@@ -2,6 +2,7 @@
 set -euo pipefail
 test -z "${TRACE:-}" || set -x
 
+export DEBIAN_FRONTEND=noninteractive
 if ! command -v git >/dev/null 2>&1; then
     echo "Installing git" >&2
     sudo apt-get install -qqy git

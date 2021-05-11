@@ -2,6 +2,7 @@
 set -aeuo pipefail
 test -z "${TRACE:-}" || set -x
 
+export DEBIAN_FRONTEND=noninteractive
 DIR=$(cd "$(dirname "$0")" && pwd)
 DOTENV=false
 DRYRUN=false
@@ -84,7 +85,7 @@ load_dotenv() {(
 
 install_module() {(  # install item from ./modules
     MOD=${1/=*/}
-    VER=${1/$MOD/}
+    VER=$(echo "$1" | grep = | sed "s/.*=//" || true)
     # shellcheck disable=SC1090
     . "$DIR/modules/$MOD.sh"
     if $FORCE || ! is_installed; then
@@ -97,7 +98,7 @@ install_module() {(  # install item from ./modules
 )}
 
 latest() {  # get latest version string from a release page
-    test -z "${VERSION:-}" || { echo "$VERSION" && return; }
+    test -z "${VER:-}" || { echo "$VER" && return; }
     URL=$1
     REGEX="${2:-tag/$VERSION_RE}"
     echo "$1" | grep -q "^http" || URL=https://github.com/$1/releases
